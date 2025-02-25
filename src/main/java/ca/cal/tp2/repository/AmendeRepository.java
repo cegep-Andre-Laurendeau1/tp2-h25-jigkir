@@ -24,7 +24,7 @@ public class AmendeRepository {
                     ")");
 
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS Amende (" +
-                    "fineID INT PRIMARY KEY, " +
+                    "id INT PRIMARY KEY, " +
                     "montant DOUBLE, " +
                     "dateCreation TIMESTAMP, " +
                     "status BOOLEAN, " +
@@ -43,11 +43,11 @@ public class AmendeRepository {
         }
         try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
              PreparedStatement pstmt = conn.prepareStatement(
-                     "INSERT INTO Amende (fineID, montant, dateCreation, status, emprunteurID) VALUES (?, ?, ?, ?, ?)")
+                     "INSERT INTO Amende (id, montant, dateCreation, status, emprunteurID) VALUES (?, ?, ?, ?, ?)")
         ) {
-            pstmt.setInt(1, amende.getFineID());
+            pstmt.setInt(1, amende.getid());
             pstmt.setDouble(2, amende.getMontant());
-            pstmt.setTimestamp(3, new Timestamp(amende.getDateCreation().getTime()));
+            pstmt.setTimestamp(3, Timestamp.valueOf(amende.getDateCreation().atStartOfDay()));
             pstmt.setBoolean(4, amende.isStatus());
             pstmt.setInt(5, amende.getEmprunteur().getUserID());
             pstmt.executeUpdate();
@@ -66,13 +66,13 @@ public class AmendeRepository {
 
             while (rs.next()) {
                 Amende amende = new Amende(
-                        rs.getInt("fineID"),
+                        rs.getInt("id"),
                         rs.getDouble("montant"),
-                        null,  // You can load the Emprunteur separately if needed
-                        null   // And any additional details for EmpruntDetail if required
+                        null,
+                        null
                 );
                 amende.setStatus(rs.getBoolean("status"));
-                amende.setDateCreation(rs.getTimestamp("dateCreation"));
+                amende.setDateCreation(rs.getTimestamp("dateCreation").toLocalDateTime().toLocalDate());
                 amendes.add(amende);
             }
         } catch (SQLException e) {
@@ -89,7 +89,7 @@ public class AmendeRepository {
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
                 Amende amende = new Amende(
-                        rs.getInt("fineID"),
+                        rs.getInt("id"),
                         rs.getDouble("montant"),
                         emprunteur,
                         null

@@ -12,7 +12,7 @@ public abstract class Document {
     }
 
     public boolean verifieDisponibilite() {
-        return nombreExemplaires > 0;
+        return nombreExemplaires <= 0;
     }
 
     public abstract int getDureeEmprunt();

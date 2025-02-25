@@ -5,17 +5,15 @@ import ca.cal.tp2.model.EmpruntDetail;
 import ca.cal.tp2.model.Emprunteur;
 import ca.cal.tp2.repository.AmendeRepository;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 public class AmendeService {
-    private AmendeRepository amendeRepository = new AmendeRepository();
+    private final AmendeRepository amendeRepository = new AmendeRepository();
     private static int nextAmendeId = 1;
-
-    public AmendeService() {
-        this.amendeRepository = new AmendeRepository();
-    }
 
     public Amende createAmende(Emprunteur emprunteur, EmpruntDetail empruntDetail, double montant) {
         Amende amende = new Amende(nextAmendeId++, montant, emprunteur, empruntDetail);
@@ -51,8 +49,8 @@ public class AmendeService {
         List<Amende> allAmendes = amendeRepository.findAll();
         List<Amende> filteredAmendes = new ArrayList<>();
         for (Amende amende : allAmendes) {
-            Date creation = amende.getDateCreation();
-            if (creation != null && !creation.before(debut) && !creation.after(fin)) {
+            LocalDate creation = amende.getDateCreation();
+            if (creation != null && !creation.isBefore(debut.toInstant().atZone(ZoneId.systemDefault()).toLocalDate()) && !creation.isAfter(fin.toInstant().atZone(ZoneId.systemDefault()).toLocalDate())) {
                 filteredAmendes.add(amende);
             }
         }

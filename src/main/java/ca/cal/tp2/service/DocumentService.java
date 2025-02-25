@@ -6,7 +6,7 @@ import ca.cal.tp2.repository.DocumentRepository;
 import java.util.List;
 
 public class DocumentService {
-    private DocumentRepository documentRepository;
+    private final DocumentRepository documentRepository;
 
     public DocumentService() {
         this.documentRepository = new DocumentRepository();

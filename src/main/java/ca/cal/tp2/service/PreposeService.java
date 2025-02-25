@@ -6,10 +6,10 @@ import java.util.Date;
 import java.util.List;
 
 public class PreposeService {
-    private DocumentService documentService;
-    private AmendeService amendeService;
-    private EmpruntService empruntService;
-    private UtilisateurRepository utilisateurRepository;
+    private final DocumentService documentService;
+    private final AmendeService amendeService;
+    private final EmpruntService empruntService;
+    private final UtilisateurRepository utilisateurRepository;
     private static int nextUtilisateurId = 1;
 
     public PreposeService() {

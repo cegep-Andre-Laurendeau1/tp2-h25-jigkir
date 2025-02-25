@@ -1,24 +1,24 @@
 package ca.cal.tp2.model;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 public class Amende {
-    private int fineID;
+    private int id;
     private double montant;
-    private Date dateCreation;
+    private LocalDate dateCreation;
     private boolean status;
     private Emprunteur emprunteur;
     private EmpruntDetail empruntDetail;
 
     public Amende() {
-        this.dateCreation = new Date();
+        this.dateCreation = LocalDate.now();
         this.status = false;
     }
 
-    public Amende(int fineID, double montant, Emprunteur emprunteur, EmpruntDetail empruntDetail) {
-        this.fineID = fineID;
+    public Amende(int id, double montant, Emprunteur emprunteur, EmpruntDetail empruntDetail) {
+        this.id = id;
         this.montant = montant;
-        this.dateCreation = new Date();
+        this.dateCreation = LocalDate.now();
         this.status = false;
         this.emprunteur = emprunteur;
         this.empruntDetail = empruntDetail;
@@ -41,12 +41,12 @@ public class Amende {
         this.status = true;
     }
 
-    public int getFineID() {
-        return fineID;
+    public int getid() {
+        return id;
     }
 
-    public void setFineID(int fineID) {
-        this.fineID = fineID;
+    public void setid(int id) {
+        this.id = id;
     }
 
     public double getMontant() {
@@ -57,11 +57,11 @@ public class Amende {
         this.montant = montant;
     }
 
-    public Date getDateCreation() {
+    public LocalDate getDateCreation() {
         return dateCreation;
     }
 
-    public void setDateCreation(Date dateCreation) {
+    public void setDateCreation(LocalDate dateCreation) {
         this.dateCreation = dateCreation;
     }
 

@@ -20,7 +20,7 @@ public class Emprunteur extends Utilisateur {
             return false;
         }
 
-        if (!document.verifieDisponibilite()) {
+        if (document.verifieDisponibilite()) {
             return false;
         }
 

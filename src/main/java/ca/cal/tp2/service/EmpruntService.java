@@ -6,7 +6,7 @@ import java.util.Date;
 import java.util.List;
 
 public class EmpruntService {
-    private EmpruntRepository empruntRepository = new EmpruntRepository();
+    private final EmpruntRepository empruntRepository = new EmpruntRepository();
     private static int nextEmpruntId = 1;
     private static int nextEmpruntDetailId = 1;
 
@@ -27,7 +27,7 @@ public class EmpruntService {
             return false;
         }
 
-        if (!document.verifieDisponibilite()) {
+        if (document.verifieDisponibilite()) {
             return false;
         }
 
