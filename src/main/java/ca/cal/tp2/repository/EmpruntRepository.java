@@ -48,7 +48,7 @@ public class EmpruntRepository {
 
             pstmt.setInt(1, emprunt.getBorrowID());
             pstmt.setInt(2, emprunt.getEmprunteur().getUserID());
-            pstmt.setTimestamp(3, new Timestamp(emprunt.getDateEmprunt().getTime()));
+            pstmt.setTimestamp(3, Timestamp.valueOf(emprunt.getDateEmprunt().atStartOfDay()));
             pstmt.setString(4, emprunt.getStatus());
 
             int result = pstmt.executeUpdate();
@@ -96,7 +96,7 @@ public class EmpruntRepository {
                      "UPDATE emprunt SET emprunteur_id = ?, date_emprunt = ?, status = ? WHERE id = ?")) {
 
             pstmt.setInt(1, emprunt.getEmprunteur().getUserID());
-            pstmt.setTimestamp(2, new Timestamp(emprunt.getDateEmprunt().getTime()));
+            pstmt.setTimestamp(2, Timestamp.valueOf(emprunt.getDateEmprunt().atStartOfDay()));
             pstmt.setString(3, emprunt.getStatus());
             pstmt.setInt(4, emprunt.getBorrowID());
 
@@ -154,7 +154,7 @@ public class EmpruntRepository {
                         rs.getInt("id"),
                         emprunteur
                 );
-                emprunt.setDateEmprunt(rs.getTimestamp("date_emprunt"));
+                emprunt.setDateEmprunt(rs.getTimestamp("date_emprunt").toLocalDateTime().toLocalDate());
                 emprunt.setStatus(rs.getString("status"));
 
                 loadEmpruntDetails(emprunt);
@@ -219,7 +219,7 @@ public class EmpruntRepository {
                             rs.getInt("id"),
                             emprunteur
                     );
-                    emprunt.setDateEmprunt(rs.getTimestamp("date_emprunt"));
+                    emprunt.setDateEmprunt(rs.getTimestamp("date_emprunt").toLocalDateTime().toLocalDate());
                     emprunt.setStatus(rs.getString("status"));
 
                     loadEmpruntDetails(emprunt);
@@ -254,7 +254,7 @@ public class EmpruntRepository {
                             rs.getInt("id"),
                             emprunteur
                     );
-                    emprunt.setDateEmprunt(rs.getTimestamp("date_emprunt"));
+                    emprunt.setDateEmprunt(rs.getTimestamp("date_emprunt").toLocalDateTime().toLocalDate());
                     emprunt.setStatus(rs.getString("status"));
 
                     loadEmpruntDetails(emprunt);
@@ -337,7 +337,7 @@ public class EmpruntRepository {
                             rs.getInt("id"),
                             emprunteur
                     );
-                    emprunt.setDateEmprunt(rs.getTimestamp("date_emprunt"));
+                    emprunt.setDateEmprunt(rs.getTimestamp("date_emprunt").toLocalDateTime().toLocalDate());
                     emprunt.setStatus(rs.getString("status"));
 
                     loadEmpruntDetails(emprunt);

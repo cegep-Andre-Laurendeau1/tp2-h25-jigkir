@@ -66,4 +66,8 @@ public class Emprunteur extends Utilisateur {
     public void addAmende(double montant) {
         this.amendeBalance += montant;
     }
+
+    public int getId() {
+        return getUserID();
+    }
 }

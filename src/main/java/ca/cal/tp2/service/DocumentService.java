@@ -1,6 +1,7 @@
 package ca.cal.tp2.service;
 
 import ca.cal.tp2.model.Document;
+import ca.cal.tp2.dto.LivreDTO;
 import ca.cal.tp2.repository.DocumentRepository;
 
 import java.util.List;
@@ -10,6 +11,10 @@ public class DocumentService {
 
     public DocumentService() {
         this.documentRepository = new DocumentRepository();
+    }
+
+    public LivreDTO createInitialBook() {
+        return new LivreDTO(1, "Java Programming", 5, "123456789", "John Doe", "TechBooks", 500);
     }
 
     public boolean addDocument(Document document) {

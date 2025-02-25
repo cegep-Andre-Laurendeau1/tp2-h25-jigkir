@@ -1,25 +1,19 @@
 package ca.cal.tp2.model;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 public class Emprunt {
     private int borrowID;
-    private Date dateEmprunt;
+    private LocalDate dateEmprunt;
     private String status;
     private Emprunteur emprunteur;
     private List<EmpruntDetail> empruntDetails;
 
-    public Emprunt() {
-        this.dateEmprunt = new Date();
-        this.status = "Active";
-        this.empruntDetails = new ArrayList<>();
-    }
-
     public Emprunt(int borrowID, Emprunteur emprunteur) {
         this.borrowID = borrowID;
-        this.dateEmprunt = new Date();
+        this.dateEmprunt = LocalDate.now();
         this.status = "Active";
         this.emprunteur = emprunteur;
         this.empruntDetails = new ArrayList<>();
@@ -41,11 +35,11 @@ public class Emprunt {
         this.borrowID = borrowID;
     }
 
-    public Date getDateEmprunt() {
+    public LocalDate getDateEmprunt() {
         return dateEmprunt;
     }
 
-    public void setDateEmprunt(Date dateEmprunt) {
+    public void setDateEmprunt(LocalDate dateEmprunt) {
         this.dateEmprunt = dateEmprunt;
     }
 

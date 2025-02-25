@@ -9,12 +9,7 @@ public class Amende {
     private boolean status;
     private Emprunteur emprunteur;
     private EmpruntDetail empruntDetail;
-
-    public Amende() {
-        this.dateCreation = LocalDate.now();
-        this.status = false;
-    }
-
+    
     public Amende(int id, double montant, Emprunteur emprunteur, EmpruntDetail empruntDetail) {
         this.id = id;
         this.montant = montant;

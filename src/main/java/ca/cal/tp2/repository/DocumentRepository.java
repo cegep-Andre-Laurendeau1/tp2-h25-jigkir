@@ -6,7 +6,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DocumentRepository {
+public class DocumentRepository implements IDocumentRepository {
     private static final String JDBC_DRIVER = "org.h2.Driver";
     private static final String DB_URL = "jdbc:h2:mem:TP2;DB_CLOSE_DELAY=-1";
     private static final String USER = "sa";
@@ -130,7 +130,8 @@ public class DocumentRepository {
         }
     }
 
-    public Document findById(int documentID) {
+    @Override
+    public Document findById(Integer documentID) {
         try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
              PreparedStatement pstmt = conn.prepareStatement("SELECT * FROM Document WHERE documentID = ?")) {
 
@@ -208,6 +209,7 @@ public class DocumentRepository {
         }
     }
 
+    @Override
     public List<Document> findAll() {
         List<Document> documents = new ArrayList<>();
 
@@ -219,64 +221,9 @@ public class DocumentRepository {
                 int documentID = rs.getInt("documentID");
                 String documentType = rs.getString("documentType");
 
-                if ("Livre".equals(documentType)) {
-                    try (PreparedStatement pstmtLivre = conn.prepareStatement(
-                            "SELECT * FROM Livre WHERE documentID = ?")) {
-
-                        pstmtLivre.setInt(1, documentID);
-                        ResultSet rsLivre = pstmtLivre.executeQuery();
-
-                        if (rsLivre.next()) {
-                            Livre livre = new Livre(
-                                    documentID,
-                                    rs.getString("titre"),
-                                    rs.getInt("nombreExemplaires"),
-                                    rsLivre.getString("ISBN"),
-                                    rsLivre.getString("auteur"),
-                                    rsLivre.getString("editeur"),
-                                    rsLivre.getInt("nombrePages"));
-
-                            documents.add(livre);
-                        }
-                    }
-                } else if ("CD".equals(documentType)) {
-                    try (PreparedStatement pstmtCD = conn.prepareStatement(
-                            "SELECT * FROM CD WHERE documentID = ?")) {
-
-                        pstmtCD.setInt(1, documentID);
-                        ResultSet rsCD = pstmtCD.executeQuery();
-
-                        if (rsCD.next()) {
-                            CD cd = new CD(
-                                    documentID,
-                                    rs.getString("titre"),
-                                    rs.getInt("nombreExemplaires"),
-                                    rsCD.getString("artiste"),
-                                    rsCD.getInt("duree"),
-                                    rsCD.getString("genre"));
-
-                            documents.add(cd);
-                        }
-                    }
-                } else if ("DVD".equals(documentType)) {
-                    try (PreparedStatement pstmtDVD = conn.prepareStatement(
-                            "SELECT * FROM DVD WHERE documentID = ?")) {
-
-                        pstmtDVD.setInt(1, documentID);
-                        ResultSet rsDVD = pstmtDVD.executeQuery();
-
-                        if (rsDVD.next()) {
-                            DVD dvd = new DVD(
-                                    documentID,
-                                    rs.getString("titre"),
-                                    rs.getInt("nombreExemplaires"),
-                                    rsDVD.getString("director"),
-                                    rsDVD.getInt("duree"),
-                                    rsDVD.getString("rating"));
-
-                            documents.add(dvd);
-                        }
-                    }
+                Document document = findById(documentID);
+                if (document != null) {
+                    documents.add(document);
                 }
             }
         } catch (SQLException e) {
@@ -286,6 +233,7 @@ public class DocumentRepository {
         return documents;
     }
 
+    @Override
     public boolean update(Document document) {
         try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
              PreparedStatement pstmt = conn.prepareStatement(
@@ -340,6 +288,7 @@ public class DocumentRepository {
         }
     }
 
+    @Override
     public List<Document> findByTitle(String title) {
         List<Document> documents = new ArrayList<>();
 
@@ -360,6 +309,7 @@ public class DocumentRepository {
         return documents;
     }
 
+    @Override
     public List<Document> findByAuthor(String author) {
         List<Document> documents = new ArrayList<>();
 
@@ -380,6 +330,7 @@ public class DocumentRepository {
         return documents;
     }
 
+    @Override
     public List<Document> findByPublisher(String publisher) {
         List<Document> documents = new ArrayList<>();
 
@@ -400,6 +351,7 @@ public class DocumentRepository {
         return documents;
     }
 
+    @Override
     public List<Document> findByType(String type) {
         List<Document> documents = new ArrayList<>();
 
