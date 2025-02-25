@@ -13,7 +13,7 @@ import java.util.List;
 
 public class EmpruntRepository {
     private Connection getConnection() throws SQLException {
-        return DriverManager.getConnection("jdbc:h2:mem:bibliotheque", "sa", "");
+        return DriverManager.getConnection("jdbc:h2:mem:TP2;DB_CLOSE_DELAY=-1", "sa", "1");
     }
 
     private void initializeDatabase() {
@@ -46,7 +46,7 @@ public class EmpruntRepository {
              PreparedStatement pstmt = conn.prepareStatement(
                      "INSERT INTO emprunt (id, emprunteur_id, date_emprunt, status) VALUES (?, ?, ?, ?)")) {
 
-            pstmt.setInt(1, emprunt.getEmpruntId());
+            pstmt.setInt(1, emprunt.getBorrowID());
             pstmt.setInt(2, emprunt.getEmprunteur().getUserID());
             pstmt.setTimestamp(3, new Timestamp(emprunt.getDateEmprunt().getTime()));
             pstmt.setString(4, emprunt.getStatus());
@@ -71,7 +71,7 @@ public class EmpruntRepository {
                              "VALUES (?, ?, ?, ?, ?, ?)")) {
 
             pstmt.setInt(1, detail.getLineItemID());
-            pstmt.setInt(2, detail.getEmprunt().getEmpruntId());
+            pstmt.setInt(2, detail.getEmprunt().getBorrowID());
             pstmt.setInt(3, detail.getDocument().getDocumentID());
             pstmt.setTimestamp(4, new Timestamp(detail.getDateRetourPrevue().getTime()));
 
@@ -98,7 +98,7 @@ public class EmpruntRepository {
             pstmt.setInt(1, emprunt.getEmprunteur().getUserID());
             pstmt.setTimestamp(2, new Timestamp(emprunt.getDateEmprunt().getTime()));
             pstmt.setString(3, emprunt.getStatus());
-            pstmt.setInt(4, emprunt.getEmpruntId());
+            pstmt.setInt(4, emprunt.getBorrowID());
 
             int result = pstmt.executeUpdate();
 
@@ -119,7 +119,7 @@ public class EmpruntRepository {
                      "UPDATE emprunt_detail SET emprunt_id = ?, document_id = ?, date_retour_prevue = ?, " +
                              "date_retour_actuelle = ?, status = ? WHERE id = ?")) {
 
-            pstmt.setInt(1, detail.getEmprunt().getEmpruntId());
+            pstmt.setInt(1, detail.getEmprunt().getBorrowID());
             pstmt.setInt(2, detail.getDocument().getDocumentID());
             pstmt.setTimestamp(3, new Timestamp(detail.getDateRetourPrevue().getTime()));
 
@@ -144,7 +144,7 @@ public class EmpruntRepository {
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(
-                     "SELECT * FROM emprunt WHERE emprunteur_id = ?")) {
+                     "SELECT id, emprunteur_id, date_emprunt, status FROM emprunt WHERE emprunteur_id = ?")) {
 
             pstmt.setInt(1, emprunteur.getUserID());
             ResultSet rs = pstmt.executeQuery();
@@ -171,11 +171,10 @@ public class EmpruntRepository {
     private void loadEmpruntDetails(Emprunt emprunt) {
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(
-                     "SELECT ed.*, d.* FROM emprunt_detail ed " +
-                             "JOIN document d ON ed.document_id = d.id " +
-                             "WHERE ed.emprunt_id = ?")) {
+                     "SELECT ed.*, d.* FROM emprunt_detail ed JOIN Document d ON ed.document_id = d.documentID WHERE ed.emprunt_id = ?"
+             )) {
 
-            pstmt.setInt(1, emprunt.getEmpruntId());
+            pstmt.setInt(1, emprunt.getBorrowID());
             ResultSet rs = pstmt.executeQuery();
 
             while (rs.next()) {
@@ -210,7 +209,7 @@ public class EmpruntRepository {
 
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT * FROM emprunt")) {
+             ResultSet rs = stmt.executeQuery("SELECT id, emprunteur_id, date_emprunt, status FROM emprunt")) {
 
             while (rs.next()) {
                 Emprunteur emprunteur = (Emprunteur) utilisateurRepo.findById(rs.getInt("emprunteur_id"));
@@ -241,7 +240,7 @@ public class EmpruntRepository {
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(
-                     "SELECT * FROM emprunt WHERE MONTH(date_emprunt) = ? AND YEAR(date_emprunt) = ?")) {
+                     "SELECT id, emprunteur_id, date_emprunt, status FROM emprunt WHERE MONTH(date_emprunt) = ? AND YEAR(date_emprunt) = ?")) {
 
             pstmt.setInt(1, month);
             pstmt.setInt(2, year);

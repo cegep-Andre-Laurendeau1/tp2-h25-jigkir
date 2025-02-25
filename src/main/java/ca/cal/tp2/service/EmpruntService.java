@@ -6,12 +6,20 @@ import java.util.Date;
 import java.util.List;
 
 public class EmpruntService {
-    private EmpruntRepository empruntRepository;
+    private EmpruntRepository empruntRepository = new EmpruntRepository();
     private static int nextEmpruntId = 1;
     private static int nextEmpruntDetailId = 1;
 
-    public EmpruntService() {
-        this.empruntRepository = new EmpruntRepository();
+    public List<Emprunt> getEmpruntsByMonth(int month, int year) {
+        return empruntRepository.findByMonth(month, year);
+    }
+
+    public List<EmpruntDetail> getUpcomingReturns(int daysAhead) {
+        return empruntRepository.findUpcomingReturns(daysAhead);
+    }
+
+    public List<Emprunt> getEmpruntsByDocument(Document document) {
+        return empruntRepository.findByDocument(document);
     }
 
     public boolean createEmprunt(Emprunteur emprunteur, Document document) {

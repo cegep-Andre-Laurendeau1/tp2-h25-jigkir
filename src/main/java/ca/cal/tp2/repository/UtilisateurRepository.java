@@ -10,9 +10,9 @@ import java.util.List;
 
 public class UtilisateurRepository {
     private static final String JDBC_DRIVER = "org.h2.Driver";
-    private static final String DB_URL = "jdbc:h2:mem:exercicejdbc;DB_CLOSE_DELAY=-1";
+    private static final String DB_URL = "jdbc:h2:mem:TP2;DB_CLOSE_DELAY=-1";
     private static final String USER = "sa";
-    private static final String PASS = "";
+    private static final String PASS = "1";
 
     public UtilisateurRepository() {
         try {

@@ -5,10 +5,12 @@ import ca.cal.tp2.model.EmpruntDetail;
 import ca.cal.tp2.model.Emprunteur;
 import ca.cal.tp2.repository.AmendeRepository;
 
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class AmendeService {
-    private AmendeRepository amendeRepository;
+    private AmendeRepository amendeRepository = new AmendeRepository();
     private static int nextAmendeId = 1;
 
     public AmendeService() {
@@ -41,11 +43,23 @@ public class AmendeService {
         return true;
     }
 
-    public List<Amende> getAllAmendes() {
-        return amendeRepository.findAll();
+    public List<Amende> getAllAmendesByEmprunteur(Emprunteur emprunteur) {
+        return amendeRepository.findUnpaidByEmprunteur(emprunteur);
     }
 
-    public List<Amende> getAmendesByEmprunteur(Emprunteur emprunteur) {
-        return amendeRepository.findByEmprunteur(emprunteur);
+    public List<Amende> getAmendesByDateRange(Date debut, Date fin) {
+        List<Amende> allAmendes = amendeRepository.findAll();
+        List<Amende> filteredAmendes = new ArrayList<>();
+        for (Amende amende : allAmendes) {
+            Date creation = amende.getDateCreation();
+            if (creation != null && !creation.before(debut) && !creation.after(fin)) {
+                filteredAmendes.add(amende);
+            }
+        }
+        return filteredAmendes;
+    }
+
+    public List<Amende> getAllAmendes() {
+        return amendeRepository.findAll();
     }
 }
