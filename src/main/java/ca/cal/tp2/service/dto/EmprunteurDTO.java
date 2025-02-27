@@ -1,4 +1,4 @@
-package ca.cal.tp2.dto;
+package ca.cal.tp2.service.dto;
 
 public class EmprunteurDTO {
     private String nom;
@@ -11,7 +11,6 @@ public class EmprunteurDTO {
         this.telephone = telephone;
     }
 
-    // Getters
     public String getNom() { return nom; }
     public String getEmail() { return email; }
     public String getTelephone() { return telephone; }
