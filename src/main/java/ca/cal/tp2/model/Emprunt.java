@@ -5,13 +5,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Emprunt {
-    private int borrowID;
+    private Long borrowID;
     private LocalDate dateEmprunt;
     private String status;
     private Emprunteur emprunteur;
     private List<EmpruntDetail> empruntDetails;
 
-    public Emprunt(int borrowID, Emprunteur emprunteur) {
+    public Emprunt(Long borrowID, Emprunteur emprunteur) {
         this.borrowID = borrowID;
         this.dateEmprunt = LocalDate.now();
         this.status = "Active";
@@ -27,11 +27,11 @@ public class Emprunt {
         empruntDetails.add(detail);
     }
 
-    public int getBorrowID() {
+    public Long getBorrowID() {
         return borrowID;
     }
 
-    public void setBorrowID(int borrowID) {
+    public void setBorrowID(Long borrowID) {
         this.borrowID = borrowID;
     }
 

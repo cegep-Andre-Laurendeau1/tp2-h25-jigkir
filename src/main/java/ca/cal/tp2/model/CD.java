@@ -5,7 +5,7 @@ public class CD extends Document {
     private int duree;
     private String genre;
 
-    public CD(int documentID, String titre, int nombreExemplaires,
+    public CD(Long documentID, String titre, int nombreExemplaires,
               String artiste, int duree, String genre) {
         super(documentID, titre, nombreExemplaires);
         this.artiste = artiste;

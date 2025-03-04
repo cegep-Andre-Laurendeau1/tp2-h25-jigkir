@@ -9,7 +9,7 @@ public class Emprunteur extends Utilisateur {
     private List<Emprunt> emprunts;
     private double amendeBalance;
 
-    public Emprunteur(int userID, String name, String email, String phoneNumber) {
+    public Emprunteur(Long userID, String name, String email, String phoneNumber) {
         super(userID, name, email, phoneNumber);
         this.emprunts = new ArrayList<>();
         this.amendeBalance = 0.0;
@@ -67,7 +67,7 @@ public class Emprunteur extends Utilisateur {
         this.amendeBalance += montant;
     }
 
-    public int getId() {
+    public Long getId() {
         return getUserID();
     }
 }

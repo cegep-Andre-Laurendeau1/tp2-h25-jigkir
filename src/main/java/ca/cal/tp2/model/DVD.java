@@ -5,7 +5,7 @@ public class DVD extends Document {
     private int duree;
     private String rating;
 
-    public DVD(int documentID, String titre, int nombreExemplaires,
+    public DVD(Long documentID, String titre, int nombreExemplaires,
                String director, int duree, String rating) {
         super(documentID, titre, nombreExemplaires);
         this.director = director;

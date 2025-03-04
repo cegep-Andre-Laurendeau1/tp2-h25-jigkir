@@ -1,11 +1,11 @@
 package ca.cal.tp2.model;
 
 public abstract class Document {
-    private int documentID;
+    private Long documentID;
     private String titre;
     private int nombreExemplaires;
 
-    public Document(int documentID, String titre, int nombreExemplaires) {
+    public Document(Long documentID, String titre, int nombreExemplaires) {
         this.documentID = documentID;
         this.titre = titre;
         this.nombreExemplaires = nombreExemplaires;
@@ -17,11 +17,11 @@ public abstract class Document {
 
     public abstract int getDureeEmprunt();
 
-    public int getDocumentID() {
+    public Long getDocumentID() {
         return documentID;
     }
 
-    public void setDocumentID(int documentID) {
+    public void setDocumentID(Long documentID) {
         this.documentID = documentID;
     }
 

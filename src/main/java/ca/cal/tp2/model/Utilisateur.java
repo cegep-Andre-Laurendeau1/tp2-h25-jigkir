@@ -1,12 +1,12 @@
 package ca.cal.tp2.model;
 
 public class Utilisateur {
-    private int userID;
+    private Long userID;
     private String name;
     private String email;
     private String phoneNumber;
 
-    public Utilisateur(int userID, String name, String email, String phoneNumber) {
+    public Utilisateur(Long userID, String name, String email, String phoneNumber) {
         this.userID = userID;
         this.name = name;
         this.email = email;
@@ -17,9 +17,9 @@ public class Utilisateur {
         return true;
     }
 
-    public int getUserID() { return userID; }
+    public Long getUserID() { return userID; }
 
-    public void setUserID(int userID) { this.userID = userID; }
+    public void setUserID(Long userID) { this.userID = userID; }
 
     public String getName() { return name; }
 

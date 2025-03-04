@@ -1,25 +1,25 @@
 package ca.cal.tp2.service;
 
 import ca.cal.tp2.model.*;
-import ca.cal.tp2.repository.EmpruntRepository;
+import ca.cal.tp2.repository.EmpruntRepositoryJDBC;
 import java.util.Date;
 import java.util.List;
 
 public class EmpruntService {
-    private final EmpruntRepository empruntRepository = new EmpruntRepository();
-    private static int nextEmpruntId = 1;
+    private final EmpruntRepositoryJDBC empruntRepositoryJDBC = new EmpruntRepositoryJDBC();
+    private static Long nextEmpruntId = 1L;
     private static int nextEmpruntDetailId = 1;
 
     public List<Emprunt> getEmpruntsByMonth(int month, int year) {
-        return empruntRepository.findByMonth(month, year);
+        return empruntRepositoryJDBC.findByMonth(month, year);
     }
 
     public List<EmpruntDetail> getUpcomingReturns(int daysAhead) {
-        return empruntRepository.findUpcomingReturns(daysAhead);
+        return empruntRepositoryJDBC.findUpcomingReturns(daysAhead);
     }
 
     public List<Emprunt> getEmpruntsByDocument(Document document) {
-        return empruntRepository.findByDocument(document);
+        return empruntRepositoryJDBC.findByDocument(document);
     }
 
     public boolean createEmprunt(Emprunteur emprunteur, Document document) {
@@ -40,7 +40,7 @@ public class EmpruntService {
 
         emprunteur.getEmprunts().add(emprunt);
 
-        return empruntRepository.save(emprunt);
+        return empruntRepositoryJDBC.save(emprunt);
     }
 
     public boolean retournerDocument(Emprunteur emprunteur, Document document) {
@@ -90,14 +90,14 @@ public class EmpruntService {
             activeEmprunt.setStatus("Completed");
         }
 
-        return empruntRepository.update(activeEmprunt);
+        return empruntRepositoryJDBC.update(activeEmprunt);
     }
 
     public List<Emprunt> getEmpruntsForEmprunteur(Emprunteur emprunteur) {
-        return empruntRepository.findByEmprunteur(emprunteur);
+        return empruntRepositoryJDBC.findByEmprunteur(emprunteur);
     }
 
     public List<Emprunt> getAllEmprunts() {
-        return empruntRepository.findAll();
+        return empruntRepositoryJDBC.findAll();
     }
 }

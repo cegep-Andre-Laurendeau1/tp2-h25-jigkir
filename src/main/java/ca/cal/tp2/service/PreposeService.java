@@ -1,7 +1,7 @@
 package ca.cal.tp2.service;
 
 import ca.cal.tp2.model.*;
-import ca.cal.tp2.repository.UtilisateurRepository;
+import ca.cal.tp2.repository.UtilisateurRepositoryJDBC;
 import java.util.Date;
 import java.util.List;
 
@@ -9,14 +9,14 @@ public class PreposeService {
     private final DocumentService documentService;
     private final AmendeService amendeService;
     private final EmpruntService empruntService;
-    private final UtilisateurRepository utilisateurRepository;
-    private static int nextUtilisateurId = 1;
+    private final UtilisateurRepositoryJDBC utilisateurRepositoryJDBC;
+    private static Long nextUtilisateurId = 1L;
 
     public PreposeService() {
         this.documentService = new DocumentService();
         this.amendeService = new AmendeService();
         this.empruntService = new EmpruntService();
-        this.utilisateurRepository = new UtilisateurRepository();
+        this.utilisateurRepositoryJDBC = new UtilisateurRepositoryJDBC();
     }
 
     public boolean entreNouveauDocument(Document document) {
@@ -37,7 +37,7 @@ public class PreposeService {
 
     public Emprunteur inscrireNouvelEmprunteur(String name, String email, String phoneNumber) {
         Emprunteur emprunteur = new Emprunteur(nextUtilisateurId++, name, email, phoneNumber);
-        if (utilisateurRepository.save(emprunteur)) {
+        if (utilisateurRepositoryJDBC.save(emprunteur)) {
             return emprunteur;
         }
         return null;

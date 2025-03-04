@@ -7,7 +7,7 @@ import ca.cal.tp2.service.EmpruntService;
 import java.util.List;
 
 public class Prepose extends Utilisateur {
-    public Prepose(int userID, String name, String email, String phoneNumber) {
+    public Prepose(Long userID, String name, String email, String phoneNumber) {
         super(userID, name, email, phoneNumber);
     }
 

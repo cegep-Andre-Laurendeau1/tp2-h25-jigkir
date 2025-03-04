@@ -3,7 +3,7 @@ package ca.cal.tp2.service;
 import ca.cal.tp2.model.Amende;
 import ca.cal.tp2.model.EmpruntDetail;
 import ca.cal.tp2.model.Emprunteur;
-import ca.cal.tp2.repository.AmendeRepository;
+import ca.cal.tp2.repository.AmendeRepositoryJDBC;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -12,13 +12,13 @@ import java.util.Date;
 import java.util.List;
 
 public class AmendeService {
-    private final AmendeRepository amendeRepository = new AmendeRepository();
+    private final AmendeRepositoryJDBC amendeRepositoryJDBC = new AmendeRepositoryJDBC();
     private static int nextAmendeId = 1;
 
     public Amende createAmende(Emprunteur emprunteur, EmpruntDetail empruntDetail, double montant) {
         Amende amende = new Amende(nextAmendeId++, montant, emprunteur, empruntDetail);
         emprunteur.addAmende(montant);
-        amendeRepository.save(amende);
+        amendeRepositoryJDBC.save(amende);
         return amende;
     }
 
@@ -26,7 +26,7 @@ public class AmendeService {
         if (montant <= 0 || montant > emprunteur.getAmendeBalance()) {
             return false;
         }
-        List<Amende> unpaidAmendes = amendeRepository.findUnpaidByEmprunteur(emprunteur);
+        List<Amende> unpaidAmendes = amendeRepositoryJDBC.findUnpaidByEmprunteur(emprunteur);
         double remainingPayment = montant;
         for (Amende amende : unpaidAmendes) {
             if (remainingPayment <= 0) break;
@@ -42,11 +42,11 @@ public class AmendeService {
     }
 
     public List<Amende> getAllAmendesByEmprunteur(Emprunteur emprunteur) {
-        return amendeRepository.findUnpaidByEmprunteur(emprunteur);
+        return amendeRepositoryJDBC.findUnpaidByEmprunteur(emprunteur);
     }
 
     public List<Amende> getAmendesByDateRange(Date debut, Date fin) {
-        List<Amende> allAmendes = amendeRepository.findAll();
+        List<Amende> allAmendes = amendeRepositoryJDBC.findAll();
         List<Amende> filteredAmendes = new ArrayList<>();
         for (Amende amende : allAmendes) {
             LocalDate creation = amende.getDateCreation();
@@ -58,6 +58,6 @@ public class AmendeService {
     }
 
     public List<Amende> getAllAmendes() {
-        return amendeRepository.findAll();
+        return amendeRepositoryJDBC.findAll();
     }
 }
