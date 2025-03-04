@@ -8,50 +8,25 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class UtilisateurRepository {
-    private static final String JDBC_DRIVER = "org.h2.Driver";
-    private static final String DB_URL = "jdbc:h2:mem:TP2;DB_CLOSE_DELAY=-1";
-    private static final String USER = "sa";
-    private static final String PASS = "1";
+public class UtilisateurRepositoryJDBC extends ParentRepository<Utilisateur> {
 
-    public UtilisateurRepository() {
-        try {
-            Class.forName(JDBC_DRIVER);
-            createTables();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-    }
+    @Override
+    protected void createTables() {
+        executeUpdate("CREATE TABLE IF NOT EXISTS Utilisateur " +
+                "(userID INT PRIMARY KEY, " +
+                "name VARCHAR(255), " +
+                "email VARCHAR(255), " +
+                "phoneNumber VARCHAR(20), " +
+                "userType VARCHAR(20))");
 
-    private void createTables() {
-        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
-             Statement stmt = conn.createStatement()) {
+        executeUpdate("CREATE TABLE IF NOT EXISTS Emprunteur " +
+                "(userID INT PRIMARY KEY, " +
+                "amendeBalance DOUBLE, " +
+                "FOREIGN KEY (userID) REFERENCES Utilisateur(userID))");
 
-            String sql = "CREATE TABLE IF NOT EXISTS Utilisateur " +
-                    "(userID INT PRIMARY KEY, " +
-                    "name VARCHAR(255), " +
-                    "email VARCHAR(255), " +
-                    "phoneNumber VARCHAR(20), " +
-                    "userType VARCHAR(20))";
-
-            stmt.executeUpdate(sql);
-
-            sql = "CREATE TABLE IF NOT EXISTS Emprunteur " +
-                    "(userID INT PRIMARY KEY, " +
-                    "amendeBalance DOUBLE, " +
-                    "FOREIGN KEY (userID) REFERENCES Utilisateur(userID))";
-
-            stmt.executeUpdate(sql);
-
-            sql = "CREATE TABLE IF NOT EXISTS Prepose " +
-                    "(userID INT PRIMARY KEY, " +
-                    "FOREIGN KEY (userID) REFERENCES Utilisateur(userID))";
-
-            stmt.executeUpdate(sql);
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        executeUpdate("CREATE TABLE IF NOT EXISTS Prepose " +
+                "(userID INT PRIMARY KEY, " +
+                "FOREIGN KEY (userID) REFERENCES Utilisateur(userID))");
     }
 
     public boolean save(Utilisateur utilisateur) {
@@ -62,11 +37,11 @@ public class UtilisateurRepository {
             userType = "Prepose";
         }
 
-        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
+        try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(
                      "INSERT INTO Utilisateur (userID, name, email, phoneNumber, userType) VALUES (?, ?, ?, ?, ?)")) {
 
-            pstmt.setInt(1, utilisateur.getUserID());
+            pstmt.setLong(1, utilisateur.getUserID());
             pstmt.setString(2, utilisateur.getName());
             pstmt.setString(3, utilisateur.getEmail());
             pstmt.setString(4, utilisateur.getPhoneNumber());
@@ -78,7 +53,7 @@ public class UtilisateurRepository {
                 try (PreparedStatement pstmtEmpr = conn.prepareStatement(
                         "INSERT INTO Emprunteur (userID, amendeBalance) VALUES (?, ?)")) {
 
-                    pstmtEmpr.setInt(1, utilisateur.getUserID());
+                    pstmtEmpr.setLong(1, utilisateur.getUserID());
                     pstmtEmpr.setDouble(2, ((Emprunteur) utilisateur).getAmendeBalance());
                     pstmtEmpr.executeUpdate();
                 }
@@ -86,7 +61,7 @@ public class UtilisateurRepository {
                 try (PreparedStatement pstmtPrep = conn.prepareStatement(
                         "INSERT INTO Prepose (userID) VALUES (?)")) {
 
-                    pstmtPrep.setInt(1, utilisateur.getUserID());
+                    pstmtPrep.setLong(1, utilisateur.getUserID());
                     pstmtPrep.executeUpdate();
                 }
             }
@@ -98,12 +73,12 @@ public class UtilisateurRepository {
         }
     }
 
-    public Utilisateur findById(int userID) {
-        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
+    public Utilisateur get(Long userID) {
+        try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(
                      "SELECT * FROM Utilisateur WHERE userID = ?")) {
 
-            pstmt.setInt(1, userID);
+            pstmt.setLong(1, userID);
             ResultSet rs = pstmt.executeQuery();
 
             if (rs.next()) {
@@ -113,7 +88,7 @@ public class UtilisateurRepository {
                     try (PreparedStatement pstmtEmpr = conn.prepareStatement(
                             "SELECT * FROM Emprunteur WHERE userID = ?")) {
 
-                        pstmtEmpr.setInt(1, userID);
+                        pstmtEmpr.setLong(1, userID);
                         ResultSet rsEmpr = pstmtEmpr.executeQuery();
 
                         if (rsEmpr.next()) {
@@ -154,14 +129,14 @@ public class UtilisateurRepository {
              ResultSet rs = stmt.executeQuery("SELECT * FROM Utilisateur")) {
 
             while (rs.next()) {
-                int userID = rs.getInt("userID");
+                Long userID = rs.getLong("userID");
                 String userType = rs.getString("userType");
 
                 if ("Emprunteur".equals(userType)) {
                     try (PreparedStatement pstmtEmpr = conn.prepareStatement(
                             "SELECT * FROM Emprunteur WHERE userID = ?")) {
 
-                        pstmtEmpr.setInt(1, userID);
+                        pstmtEmpr.setLong(1, userID);
                         ResultSet rsEmpr = pstmtEmpr.executeQuery();
 
                         if (rsEmpr.next()) {
@@ -200,7 +175,7 @@ public class UtilisateurRepository {
             pstmt.setString(1, utilisateur.getName());
             pstmt.setString(2, utilisateur.getEmail());
             pstmt.setString(3, utilisateur.getPhoneNumber());
-            pstmt.setInt(4, utilisateur.getUserID());
+            pstmt.setLong(4, utilisateur.getUserID());
 
             pstmt.executeUpdate();
 
@@ -209,7 +184,7 @@ public class UtilisateurRepository {
                         "UPDATE Emprunteur SET amendeBalance = ? WHERE userID = ?")) {
 
                     pstmtEmpr.setDouble(1, ((Emprunteur) utilisateur).getAmendeBalance());
-                    pstmtEmpr.setInt(2, utilisateur.getUserID());
+                    pstmtEmpr.setLong(2, utilisateur.getUserID());
                     pstmtEmpr.executeUpdate();
                 }
             }
@@ -232,7 +207,7 @@ public class UtilisateurRepository {
 
             while (rs.next()) {
                 Emprunteur emprunteur = new Emprunteur(
-                        rs.getInt("userID"),
+                        rs.getLong("userID"),
                         rs.getString("name"),
                         rs.getString("email"),
                         rs.getString("phoneNumber"));

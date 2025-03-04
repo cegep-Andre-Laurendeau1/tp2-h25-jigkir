@@ -11,34 +11,23 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
-public class EmpruntRepository {
-    private Connection getConnection() throws SQLException {
-        return DriverManager.getConnection("jdbc:h2:mem:TP2;DB_CLOSE_DELAY=-1", "sa", "1");
-    }
+public class EmpruntRepositoryJDBC extends ParentRepository<Emprunt> {
 
-    private void initializeDatabase() {
-        try (Connection conn = getConnection();
-             Statement stmt = conn.createStatement()) {
-            stmt.execute("CREATE TABLE IF NOT EXISTS emprunt (" +
-                    "id INT PRIMARY KEY, " +
-                    "emprunteur_id INT, " +
-                    "date_emprunt TIMESTAMP, " +
-                    "status VARCHAR(50))");
+    @Override
+    protected void createTables() {
+        executeUpdate("CREATE TABLE IF NOT EXISTS emprunt (" +
+                "id INT PRIMARY KEY, " +
+                "emprunteur_id INT, " +
+                "date_emprunt TIMESTAMP, " +
+                "status VARCHAR(50))");
 
-            stmt.execute("CREATE TABLE IF NOT EXISTS emprunt_detail (" +
-                    "id INT PRIMARY KEY, " +
-                    "emprunt_id INT, " +
-                    "document_id INT, " +
-                    "date_retour_prevue TIMESTAMP, " +
-                    "date_retour_actuelle TIMESTAMP, " +
-                    "status VARCHAR(50))");
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public EmpruntRepository() {
-        initializeDatabase();
+        executeUpdate("CREATE TABLE IF NOT EXISTS emprunt_detail (" +
+                "id INT PRIMARY KEY, " +
+                "emprunt_id INT, " +
+                "document_id INT, " +
+                "date_retour_prevue TIMESTAMP, " +
+                "date_retour_actuelle TIMESTAMP, " +
+                "status VARCHAR(50))");
     }
 
     public boolean save(Emprunt emprunt) {
@@ -46,8 +35,8 @@ public class EmpruntRepository {
              PreparedStatement pstmt = conn.prepareStatement(
                      "INSERT INTO emprunt (id, emprunteur_id, date_emprunt, status) VALUES (?, ?, ?, ?)")) {
 
-            pstmt.setInt(1, emprunt.getBorrowID());
-            pstmt.setInt(2, emprunt.getEmprunteur().getUserID());
+            pstmt.setLong(1, emprunt.getBorrowID());
+            pstmt.setLong(2, emprunt.getEmprunteur().getUserID());
             pstmt.setTimestamp(3, Timestamp.valueOf(emprunt.getDateEmprunt().atStartOfDay()));
             pstmt.setString(4, emprunt.getStatus());
 
@@ -64,6 +53,11 @@ public class EmpruntRepository {
         }
     }
 
+    @Override
+    public Emprunt get(Long id) {
+        return null; // Implementation can be added as needed
+    }
+
     private boolean saveEmpruntDetail(EmpruntDetail detail) {
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(
@@ -71,8 +65,8 @@ public class EmpruntRepository {
                              "VALUES (?, ?, ?, ?, ?, ?)")) {
 
             pstmt.setInt(1, detail.getLineItemID());
-            pstmt.setInt(2, detail.getEmprunt().getBorrowID());
-            pstmt.setInt(3, detail.getDocument().getDocumentID());
+            pstmt.setLong(2, detail.getEmprunt().getBorrowID());
+            pstmt.setLong(3, detail.getDocument().getDocumentID());
             pstmt.setTimestamp(4, new Timestamp(detail.getDateRetourPrevue().getTime()));
 
             if (detail.getDateRetourActuelle() != null) {
@@ -95,10 +89,10 @@ public class EmpruntRepository {
              PreparedStatement pstmt = conn.prepareStatement(
                      "UPDATE emprunt SET emprunteur_id = ?, date_emprunt = ?, status = ? WHERE id = ?")) {
 
-            pstmt.setInt(1, emprunt.getEmprunteur().getUserID());
+            pstmt.setLong(1, emprunt.getEmprunteur().getUserID());
             pstmt.setTimestamp(2, Timestamp.valueOf(emprunt.getDateEmprunt().atStartOfDay()));
             pstmt.setString(3, emprunt.getStatus());
-            pstmt.setInt(4, emprunt.getBorrowID());
+            pstmt.setLong(4, emprunt.getBorrowID());
 
             int result = pstmt.executeUpdate();
 
@@ -119,8 +113,8 @@ public class EmpruntRepository {
                      "UPDATE emprunt_detail SET emprunt_id = ?, document_id = ?, date_retour_prevue = ?, " +
                              "date_retour_actuelle = ?, status = ? WHERE id = ?")) {
 
-            pstmt.setInt(1, detail.getEmprunt().getBorrowID());
-            pstmt.setInt(2, detail.getDocument().getDocumentID());
+            pstmt.setLong(1, detail.getEmprunt().getBorrowID());
+            pstmt.setLong(2, detail.getDocument().getDocumentID());
             pstmt.setTimestamp(3, new Timestamp(detail.getDateRetourPrevue().getTime()));
 
             if (detail.getDateRetourActuelle() != null) {
@@ -146,12 +140,12 @@ public class EmpruntRepository {
              PreparedStatement pstmt = conn.prepareStatement(
                      "SELECT id, emprunteur_id, date_emprunt, status FROM emprunt WHERE emprunteur_id = ?")) {
 
-            pstmt.setInt(1, emprunteur.getUserID());
+            pstmt.setLong(1, emprunteur.getUserID());
             ResultSet rs = pstmt.executeQuery();
 
             while (rs.next()) {
                 Emprunt emprunt = new Emprunt(
-                        rs.getInt("id"),
+                        rs.getLong("id"),
                         emprunteur
                 );
                 emprunt.setDateEmprunt(rs.getTimestamp("date_emprunt").toLocalDateTime().toLocalDate());
@@ -174,7 +168,7 @@ public class EmpruntRepository {
                      "SELECT ed.*, d.* FROM emprunt_detail ed JOIN Document d ON ed.document_id = d.documentID WHERE ed.emprunt_id = ?"
              )) {
 
-            pstmt.setInt(1, emprunt.getBorrowID());
+            pstmt.setLong(1, emprunt.getBorrowID());
             ResultSet rs = pstmt.executeQuery();
 
             while (rs.next()) {
@@ -199,24 +193,24 @@ public class EmpruntRepository {
     }
 
     private Document loadDocument(ResultSet rs) throws SQLException {
-        DocumentRepository documentRepo = new DocumentRepository();
-        return documentRepo.findById(rs.getInt("document_id"));
+        DocumentRepositoryJDBC documentRepo = new DocumentRepositoryJDBC();
+        return documentRepo.get(rs.getLong("document_id"));
     }
 
     public List<Emprunt> findAll() {
         List<Emprunt> emprunts = new ArrayList<>();
-        UtilisateurRepository utilisateurRepo = new UtilisateurRepository();
+        UtilisateurRepositoryJDBC utilisateurRepo = new UtilisateurRepositoryJDBC();
 
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery("SELECT id, emprunteur_id, date_emprunt, status FROM emprunt")) {
 
             while (rs.next()) {
-                Emprunteur emprunteur = (Emprunteur) utilisateurRepo.findById(rs.getInt("emprunteur_id"));
+                Emprunteur emprunteur = (Emprunteur) utilisateurRepo.get(rs.getLong("emprunteur_id"));
 
                 if (emprunteur != null) {
                     Emprunt emprunt = new Emprunt(
-                            rs.getInt("id"),
+                            rs.getLong("id"),
                             emprunteur
                     );
                     emprunt.setDateEmprunt(rs.getTimestamp("date_emprunt").toLocalDateTime().toLocalDate());
@@ -236,7 +230,7 @@ public class EmpruntRepository {
 
     public List<Emprunt> findByMonth(int month, int year) {
         List<Emprunt> emprunts = new ArrayList<>();
-        UtilisateurRepository utilisateurRepo = new UtilisateurRepository();
+        UtilisateurRepositoryJDBC utilisateurRepo = new UtilisateurRepositoryJDBC();
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(
@@ -247,11 +241,11 @@ public class EmpruntRepository {
             ResultSet rs = pstmt.executeQuery();
 
             while (rs.next()) {
-                Emprunteur emprunteur = (Emprunteur) utilisateurRepo.findById(rs.getInt("emprunteur_id"));
+                Emprunteur emprunteur = (Emprunteur) utilisateurRepo.get(rs.getLong("emprunteur_id"));
 
                 if (emprunteur != null) {
                     Emprunt emprunt = new Emprunt(
-                            rs.getInt("id"),
+                            rs.getLong("id"),
                             emprunteur
                     );
                     emprunt.setDateEmprunt(rs.getTimestamp("date_emprunt").toLocalDateTime().toLocalDate());
@@ -288,13 +282,13 @@ public class EmpruntRepository {
             ResultSet rs = pstmt.executeQuery();
 
             while (rs.next()) {
-                UtilisateurRepository utilisateurRepo = new UtilisateurRepository();
-                Emprunteur emprunteur = (Emprunteur) utilisateurRepo.findById(rs.getInt("emprunteur_id"));
+                UtilisateurRepositoryJDBC utilisateurRepo = new UtilisateurRepositoryJDBC();
+                Emprunteur emprunteur = (Emprunteur) utilisateurRepo.get(rs.getLong("emprunteur_id"));
 
                 if (emprunteur != null) {
-                    Emprunt emprunt = new Emprunt(rs.getInt("emprunt_id"), emprunteur);
-                    DocumentRepository documentRepo = new DocumentRepository();
-                    Document document = documentRepo.findById(rs.getInt("document_id"));
+                    Emprunt emprunt = new Emprunt(rs.getLong("emprunt_id"), emprunteur);
+                    DocumentRepositoryJDBC documentRepo = new DocumentRepositoryJDBC();
+                    Document document = documentRepo.get(rs.getLong("document_id"));
 
                     if (document != null) {
                         EmpruntDetail detail = new EmpruntDetail(
@@ -318,7 +312,7 @@ public class EmpruntRepository {
 
     public List<Emprunt> findByDocument(Document document) {
         List<Emprunt> emprunts = new ArrayList<>();
-        UtilisateurRepository utilisateurRepo = new UtilisateurRepository();
+        UtilisateurRepositoryJDBC utilisateurRepo = new UtilisateurRepositoryJDBC();
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(
@@ -326,15 +320,15 @@ public class EmpruntRepository {
                              "JOIN emprunt_detail ed ON e.id = ed.emprunt_id " +
                              "WHERE ed.document_id = ?")) {
 
-            pstmt.setInt(1, document.getDocumentID());
+            pstmt.setLong(1, document.getDocumentID());
             ResultSet rs = pstmt.executeQuery();
 
             while (rs.next()) {
-                Emprunteur emprunteur = (Emprunteur) utilisateurRepo.findById(rs.getInt("emprunteur_id"));
+                Emprunteur emprunteur = (Emprunteur) utilisateurRepo.get(rs.getLong("emprunteur_id"));
 
                 if (emprunteur != null) {
                     Emprunt emprunt = new Emprunt(
-                            rs.getInt("id"),
+                            rs.getLong("id"),
                             emprunteur
                     );
                     emprunt.setDateEmprunt(rs.getTimestamp("date_emprunt").toLocalDateTime().toLocalDate());

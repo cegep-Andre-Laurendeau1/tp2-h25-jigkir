@@ -7,33 +7,26 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AmendeRepository {
-    private static final String DB_URL = "jdbc:h2:mem:TP2;DB_CLOSE_DELAY=-1";
-    private static final String USER = "sa";
-    private static final String PASS = "1";
+public class AmendeRepositoryJDBC extends ParentRepository<Amende> {
 
-    public AmendeRepository() {
-        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
-             Statement stmt = conn.createStatement()) {
-            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS Utilisateur (" +
-                    "userID INT PRIMARY KEY, " +
-                    "name VARCHAR(255), " +
-                    "email VARCHAR(255), " +
-                    "phoneNumber VARCHAR(20), " +
-                    "userType VARCHAR(20)" +
-                    ")");
+    @Override
+    protected void createTables() {
+        executeUpdate("CREATE TABLE IF NOT EXISTS Utilisateur (" +
+                "userID INT PRIMARY KEY, " +
+                "name VARCHAR(255), " +
+                "email VARCHAR(255), " +
+                "phoneNumber VARCHAR(20), " +
+                "userType VARCHAR(20)" +
+                ")");
 
-            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS Amende (" +
-                    "id INT PRIMARY KEY, " +
-                    "montant DOUBLE, " +
-                    "dateCreation TIMESTAMP, " +
-                    "status BOOLEAN, " +
-                    "emprunteurID INT, " +
-                    "FOREIGN KEY (emprunteurID) REFERENCES Utilisateur(userID)" +
-                    ")");
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        executeUpdate("CREATE TABLE IF NOT EXISTS Amende (" +
+                "id INT PRIMARY KEY, " +
+                "montant DOUBLE, " +
+                "dateCreation TIMESTAMP, " +
+                "status BOOLEAN, " +
+                "emprunteurID INT, " +
+                "FOREIGN KEY (emprunteurID) REFERENCES Utilisateur(userID)" +
+                ")");
     }
 
     public boolean save(Amende amende) {
@@ -41,7 +34,7 @@ public class AmendeRepository {
             System.err.println("Error: Emprunteur is null. Cannot save Amende.");
             return false;
         }
-        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
+        try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(
                      "INSERT INTO Amende (id, montant, dateCreation, status, emprunteurID) VALUES (?, ?, ?, ?, ?)")
         ) {
@@ -49,7 +42,7 @@ public class AmendeRepository {
             pstmt.setDouble(2, amende.getMontant());
             pstmt.setTimestamp(3, Timestamp.valueOf(amende.getDateCreation().atStartOfDay()));
             pstmt.setBoolean(4, amende.isStatus());
-            pstmt.setInt(5, amende.getEmprunteur().getUserID());
+            pstmt.setLong(5, amende.getEmprunteur().getUserID());
             pstmt.executeUpdate();
             return true;
         } catch (SQLException e) {
@@ -58,9 +51,14 @@ public class AmendeRepository {
         }
     }
 
+    @Override
+    public Amende get(Long id) {
+        return null;
+    }
+
     public List<Amende> findAll() {
         List<Amende> amendes = new ArrayList<>();
-        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
+        try (Connection conn = getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery("SELECT * FROM Amende")) {
 
@@ -81,11 +79,16 @@ public class AmendeRepository {
         return amendes;
     }
 
+    @Override
+    public boolean update(Amende entity) {
+        return false;
+    }
+
     public List<Amende> findUnpaidByEmprunteur(Emprunteur emprunteur) {
         List<Amende> amendes = new ArrayList<>();
-        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
+        try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement("SELECT * FROM Amende WHERE emprunteurID = ? AND status = FALSE")) {
-            pstmt.setInt(1, emprunteur.getUserID());
+            pstmt.setLong(1, emprunteur.getUserID());
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
                 Amende amende = new Amende(

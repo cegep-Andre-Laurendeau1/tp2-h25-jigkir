@@ -6,64 +6,37 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DocumentRepository implements IDocumentRepository {
-    private static final String JDBC_DRIVER = "org.h2.Driver";
-    private static final String DB_URL = "jdbc:h2:mem:TP2;DB_CLOSE_DELAY=-1";
-    private static final String USER = "sa";
-    private static final String PASS = "1";
+public class DocumentRepositoryJDBC extends ParentRepository<Document> {
 
-    public DocumentRepository() {
-        try {
-            Class.forName(JDBC_DRIVER);
-            createTables();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-    }
+    @Override
+    protected void createTables() {
+        executeUpdate("CREATE TABLE IF NOT EXISTS Document " +
+                "(documentID INT PRIMARY KEY, " +
+                "titre VARCHAR(255), " +
+                "nombreExemplaires INT, " +
+                "documentType VARCHAR(20))");
 
-    private void createTables() {
-        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
-             Statement stmt = conn.createStatement()) {
+        executeUpdate("CREATE TABLE IF NOT EXISTS Livre " +
+                "(documentID INT PRIMARY KEY, " +
+                "ISBN VARCHAR(20), " +
+                "auteur VARCHAR(255), " +
+                "editeur VARCHAR(255), " +
+                "nombrePages INT, " +
+                "FOREIGN KEY (documentID) REFERENCES Document(documentID))");
 
-            String sql = "CREATE TABLE IF NOT EXISTS Document " +
-                    "(documentID INT PRIMARY KEY, " +
-                    "titre VARCHAR(255), " +
-                    "nombreExemplaires INT, " +
-                    "documentType VARCHAR(20))";
+        executeUpdate("CREATE TABLE IF NOT EXISTS CD " +
+                "(documentID INT PRIMARY KEY, " +
+                "artiste VARCHAR(255), " +
+                "duree INT, " +
+                "genre VARCHAR(50), " +
+                "FOREIGN KEY (documentID) REFERENCES Document(documentID))");
 
-            stmt.executeUpdate(sql);
-
-            sql = "CREATE TABLE IF NOT EXISTS Livre " +
-                    "(documentID INT PRIMARY KEY, " +
-                    "ISBN VARCHAR(20), " +
-                    "auteur VARCHAR(255), " +
-                    "editeur VARCHAR(255), " +
-                    "nombrePages INT, " +
-                    "FOREIGN KEY (documentID) REFERENCES Document(documentID))";
-
-            stmt.executeUpdate(sql);
-
-            sql = "CREATE TABLE IF NOT EXISTS CD " +
-                    "(documentID INT PRIMARY KEY, " +
-                    "artiste VARCHAR(255), " +
-                    "duree INT, " +
-                    "genre VARCHAR(50), " +
-                    "FOREIGN KEY (documentID) REFERENCES Document(documentID))";
-
-            stmt.executeUpdate(sql);
-
-            sql = "CREATE TABLE IF NOT EXISTS DVD " +
-                    "(documentID INT PRIMARY KEY, " +
-                    "director VARCHAR(255), " +
-                    "duree INT, " +
-                    "rating VARCHAR(10), " +
-                    "FOREIGN KEY (documentID) REFERENCES Document(documentID))";
-
-            stmt.executeUpdate(sql);
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        executeUpdate("CREATE TABLE IF NOT EXISTS DVD " +
+                "(documentID INT PRIMARY KEY, " +
+                "director VARCHAR(255), " +
+                "duree INT, " +
+                "rating VARCHAR(10), " +
+                "FOREIGN KEY (documentID) REFERENCES Document(documentID))");
     }
 
     public boolean save(Document document) {
@@ -76,11 +49,11 @@ public class DocumentRepository implements IDocumentRepository {
             documentType = "DVD";
         }
 
-        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
+        try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(
                      "INSERT INTO Document (documentID, titre, nombreExemplaires, documentType) VALUES (?, ?, ?, ?)")) {
 
-            pstmt.setInt(1, document.getDocumentID());
+            pstmt.setLong(1, document.getDocumentID());
             pstmt.setString(2, document.getTitre());
             pstmt.setInt(3, document.getNombreExemplaires());
             pstmt.setString(4, documentType);
@@ -92,7 +65,7 @@ public class DocumentRepository implements IDocumentRepository {
                 try (PreparedStatement pstmtLivre = conn.prepareStatement(
                         "INSERT INTO Livre (documentID, ISBN, auteur, editeur, nombrePages) VALUES (?, ?, ?, ?, ?)")) {
 
-                    pstmtLivre.setInt(1, document.getDocumentID());
+                    pstmtLivre.setLong(1, document.getDocumentID());
                     pstmtLivre.setString(2, livre.getISBN());
                     pstmtLivre.setString(3, livre.getAuteur());
                     pstmtLivre.setString(4, livre.getEditeur());
@@ -104,7 +77,7 @@ public class DocumentRepository implements IDocumentRepository {
                 try (PreparedStatement pstmtCD = conn.prepareStatement(
                         "INSERT INTO CD (documentID, artiste, duree, genre) VALUES (?, ?, ?, ?)")) {
 
-                    pstmtCD.setInt(1, document.getDocumentID());
+                    pstmtCD.setLong(1, document.getDocumentID());
                     pstmtCD.setString(2, cd.getArtiste());
                     pstmtCD.setInt(3, cd.getDuree());
                     pstmtCD.setString(4, cd.getGenre());
@@ -115,7 +88,7 @@ public class DocumentRepository implements IDocumentRepository {
                 try (PreparedStatement pstmtDVD = conn.prepareStatement(
                         "INSERT INTO DVD (documentID, director, duree, rating) VALUES (?, ?, ?, ?)")) {
 
-                    pstmtDVD.setInt(1, document.getDocumentID());
+                    pstmtDVD.setLong(1, document.getDocumentID());
                     pstmtDVD.setString(2, dvd.getDirector());
                     pstmtDVD.setInt(3, dvd.getDuree());
                     pstmtDVD.setString(4, dvd.getRating());
@@ -130,12 +103,11 @@ public class DocumentRepository implements IDocumentRepository {
         }
     }
 
-    @Override
-    public Document findById(Integer documentID) {
-        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
+    public Document get(Long documentID) {
+        try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement("SELECT * FROM Document WHERE documentID = ?")) {
 
-            pstmt.setInt(1, documentID);
+            pstmt.setLong(1, documentID);
             ResultSet rs = pstmt.executeQuery();
 
             if (rs.next()) {
@@ -145,7 +117,7 @@ public class DocumentRepository implements IDocumentRepository {
                     try (PreparedStatement pstmtLivre = conn.prepareStatement(
                             "SELECT * FROM Livre WHERE documentID = ?")) {
 
-                        pstmtLivre.setInt(1, documentID);
+                        pstmtLivre.setLong(1, documentID);
                         ResultSet rsLivre = pstmtLivre.executeQuery();
 
                         if (rsLivre.next()) {
@@ -165,7 +137,7 @@ public class DocumentRepository implements IDocumentRepository {
                     try (PreparedStatement pstmtCD = conn.prepareStatement(
                             "SELECT * FROM CD WHERE documentID = ?")) {
 
-                        pstmtCD.setInt(1, documentID);
+                        pstmtCD.setLong(1, documentID);
                         ResultSet rsCD = pstmtCD.executeQuery();
 
                         if (rsCD.next()) {
@@ -184,7 +156,7 @@ public class DocumentRepository implements IDocumentRepository {
                     try (PreparedStatement pstmtDVD = conn.prepareStatement(
                             "SELECT * FROM DVD WHERE documentID = ?")) {
 
-                        pstmtDVD.setInt(1, documentID);
+                        pstmtDVD.setLong(1, documentID);
                         ResultSet rsDVD = pstmtDVD.executeQuery();
 
                         if (rsDVD.next()) {
@@ -213,15 +185,15 @@ public class DocumentRepository implements IDocumentRepository {
     public List<Document> findAll() {
         List<Document> documents = new ArrayList<>();
 
-        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
+        try (Connection conn = getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery("SELECT * FROM Document")) {
 
             while (rs.next()) {
-                int documentID = rs.getInt("documentID");
+                Long documentID = rs.getLong("documentID");
                 String documentType = rs.getString("documentType");
 
-                Document document = findById(documentID);
+                Document document = get(documentID);
                 if (document != null) {
                     documents.add(document);
                 }
@@ -235,13 +207,13 @@ public class DocumentRepository implements IDocumentRepository {
 
     @Override
     public boolean update(Document document) {
-        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
+        try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(
                      "UPDATE Document SET titre = ?, nombreExemplaires = ? WHERE documentID = ?")) {
 
             pstmt.setString(1, document.getTitre());
             pstmt.setInt(2, document.getNombreExemplaires());
-            pstmt.setInt(3, document.getDocumentID());
+            pstmt.setLong(3, document.getDocumentID());
 
             pstmt.executeUpdate();
 
@@ -254,7 +226,7 @@ public class DocumentRepository implements IDocumentRepository {
                     pstmtLivre.setString(2, livre.getAuteur());
                     pstmtLivre.setString(3, livre.getEditeur());
                     pstmtLivre.setInt(4, livre.getNombrePages());
-                    pstmtLivre.setInt(5, document.getDocumentID());
+                    pstmtLivre.setLong(5, document.getDocumentID());
                     pstmtLivre.executeUpdate();
                 }
             } else if (document instanceof CD) {
@@ -265,7 +237,7 @@ public class DocumentRepository implements IDocumentRepository {
                     pstmtCD.setString(1, cd.getArtiste());
                     pstmtCD.setInt(2, cd.getDuree());
                     pstmtCD.setString(3, cd.getGenre());
-                    pstmtCD.setInt(4, document.getDocumentID());
+                    pstmtCD.setLong(4, document.getDocumentID());
                     pstmtCD.executeUpdate();
                 }
             } else if (document instanceof DVD) {
@@ -276,7 +248,7 @@ public class DocumentRepository implements IDocumentRepository {
                     pstmtDVD.setString(1, dvd.getDirector());
                     pstmtDVD.setInt(2, dvd.getDuree());
                     pstmtDVD.setString(3, dvd.getRating());
-                    pstmtDVD.setInt(4, document.getDocumentID());
+                    pstmtDVD.setLong(4, document.getDocumentID());
                     pstmtDVD.executeUpdate();
                 }
             }
@@ -288,11 +260,10 @@ public class DocumentRepository implements IDocumentRepository {
         }
     }
 
-    @Override
     public List<Document> findByTitle(String title) {
         List<Document> documents = new ArrayList<>();
 
-        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
+        try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(
                      "SELECT * FROM Document WHERE LOWER(titre) LIKE ?")) {
 
@@ -300,7 +271,7 @@ public class DocumentRepository implements IDocumentRepository {
             ResultSet rs = pstmt.executeQuery();
 
             while (rs.next()) {
-                documents.add(findById(rs.getInt("documentID")));
+                documents.add(get(rs.getLong("documentID")));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -309,7 +280,6 @@ public class DocumentRepository implements IDocumentRepository {
         return documents;
     }
 
-    @Override
     public List<Document> findByAuthor(String author) {
         List<Document> documents = new ArrayList<>();
 
@@ -321,7 +291,7 @@ public class DocumentRepository implements IDocumentRepository {
             ResultSet rs = pstmt.executeQuery();
 
             while (rs.next()) {
-                documents.add(findById(rs.getInt("documentID")));
+                documents.add(get(rs.getLong("documentID")));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -330,7 +300,6 @@ public class DocumentRepository implements IDocumentRepository {
         return documents;
     }
 
-    @Override
     public List<Document> findByPublisher(String publisher) {
         List<Document> documents = new ArrayList<>();
 
@@ -342,7 +311,7 @@ public class DocumentRepository implements IDocumentRepository {
             ResultSet rs = pstmt.executeQuery();
 
             while (rs.next()) {
-                documents.add(findById(rs.getInt("documentID")));
+                documents.add(get(rs.getLong("documentID")));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -351,7 +320,6 @@ public class DocumentRepository implements IDocumentRepository {
         return documents;
     }
 
-    @Override
     public List<Document> findByType(String type) {
         List<Document> documents = new ArrayList<>();
 
@@ -363,7 +331,7 @@ public class DocumentRepository implements IDocumentRepository {
             ResultSet rs = pstmt.executeQuery();
 
             while (rs.next()) {
-                documents.add(findById(rs.getInt("documentID")));
+                documents.add(get(rs.getLong("documentID")));
             }
         } catch (SQLException e) {
             e.printStackTrace();
