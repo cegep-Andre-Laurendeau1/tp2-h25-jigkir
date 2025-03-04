@@ -1,8 +1,8 @@
 package ca.cal.tp2;
 
-import ca.cal.tp2.dto.EmpruntDTO;
-import ca.cal.tp2.dto.EmprunteurDTO;
-import ca.cal.tp2.dto.LivreDTO;
+import ca.cal.tp2.service.dto.EmpruntDTO;
+import ca.cal.tp2.service.dto.EmprunteurDTO;
+import ca.cal.tp2.service.dto.LivreDTO;
 import ca.cal.tp2.model.Amende;
 import ca.cal.tp2.model.Emprunt;
 import ca.cal.tp2.model.Emprunteur;
