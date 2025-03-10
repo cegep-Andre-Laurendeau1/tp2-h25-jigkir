@@ -1,25 +1,20 @@
 package ca.cal.tp2.service;
 
-import ca.cal.tp2.model.*;
+import ca.cal.tp2.model.Document;
+import ca.cal.tp2.model.Emprunt;
+import ca.cal.tp2.model.EmpruntDetail;
+import ca.cal.tp2.model.Emprunteur;
 import ca.cal.tp2.repository.EmpruntRepositoryJDBC;
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.List;
 
 public class EmpruntService {
-    private final EmpruntRepositoryJDBC empruntRepositoryJDBC = new EmpruntRepositoryJDBC();
+    private final EmpruntRepositoryJDBC EmpruntRepositoryJDBC = new EmpruntRepositoryJDBC();
     private static Long nextEmpruntId = 1L;
     private static int nextEmpruntDetailId = 1;
 
     public List<Emprunt> getEmpruntsByMonth(int month, int year) {
-        return empruntRepositoryJDBC.findByMonth(month, year);
-    }
-
-    public List<EmpruntDetail> getUpcomingReturns(int daysAhead) {
-        return empruntRepositoryJDBC.findUpcomingReturns(daysAhead);
-    }
-
-    public List<Emprunt> getEmpruntsByDocument(Document document) {
-        return empruntRepositoryJDBC.findByDocument(document);
+        return EmpruntRepositoryJDBC.findByMonth(month, year);
     }
 
     public boolean createEmprunt(Emprunteur emprunteur, Document document) {
@@ -40,7 +35,7 @@ public class EmpruntService {
 
         emprunteur.getEmprunts().add(emprunt);
 
-        return empruntRepositoryJDBC.save(emprunt);
+        return EmpruntRepositoryJDBC.save(emprunt);
     }
 
     public boolean retournerDocument(Emprunteur emprunteur, Document document) {
@@ -66,7 +61,7 @@ public class EmpruntService {
             return false;
         }
 
-        activeEmpruntDetail.setDateRetourActuelle(new Date());
+        activeEmpruntDetail.setDateRetourActuelle(LocalDate.now());
         activeEmpruntDetail.updateStatus();
 
         long daysOverdue = activeEmpruntDetail.isEnRetard();
@@ -90,14 +85,14 @@ public class EmpruntService {
             activeEmprunt.setStatus("Completed");
         }
 
-        return empruntRepositoryJDBC.update(activeEmprunt);
+        return EmpruntRepositoryJDBC.update(activeEmprunt);
     }
 
     public List<Emprunt> getEmpruntsForEmprunteur(Emprunteur emprunteur) {
-        return empruntRepositoryJDBC.findByEmprunteur(emprunteur);
+        return EmpruntRepositoryJDBC.findByEmprunteur(emprunteur);
     }
 
     public List<Emprunt> getAllEmprunts() {
-        return empruntRepositoryJDBC.findAll();
+        return EmpruntRepositoryJDBC.findAll();
     }
 }

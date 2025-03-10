@@ -72,38 +72,15 @@ public abstract class ParentRepository<T> implements IBaseRepository<T> {
         }
     }
 
-    /**
-     * Abstract method to save an entity to the database.
-     *
-     * @param entity The entity to save
-     * @return true if save succeeded, false otherwise
-     */
     @Override
     public abstract boolean save(T entity);
 
-    /**
-     * Abstract method to retrieve an entity by ID.
-     *
-     * @param id The ID of the entity to retrieve
-     * @return The entity if found, null otherwise
-     */
     @Override
     public abstract T get(Long id);
 
-    /**
-     * Abstract method to retrieve all entities.
-     *
-     * @return A list of all entities
-     */
     @Override
     public abstract List<T> findAll();
 
-    /**
-     * Abstract method to update an entity.
-     *
-     * @param entity The entity to update
-     * @return true if update succeeded, false otherwise
-     */
     @Override
     public abstract boolean update(T entity);
 }

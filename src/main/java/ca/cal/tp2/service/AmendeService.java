@@ -12,13 +12,13 @@ import java.util.Date;
 import java.util.List;
 
 public class AmendeService {
-    private final AmendeRepositoryJDBC amendeRepositoryJDBC = new AmendeRepositoryJDBC();
+    private final AmendeRepositoryJDBC AmendeRepositoryJDBC = new AmendeRepositoryJDBC();
     private static int nextAmendeId = 1;
 
     public Amende createAmende(Emprunteur emprunteur, EmpruntDetail empruntDetail, double montant) {
         Amende amende = new Amende(nextAmendeId++, montant, emprunteur, empruntDetail);
         emprunteur.addAmende(montant);
-        amendeRepositoryJDBC.save(amende);
+        AmendeRepositoryJDBC.save(amende);
         return amende;
     }
 
@@ -26,7 +26,7 @@ public class AmendeService {
         if (montant <= 0 || montant > emprunteur.getAmendeBalance()) {
             return false;
         }
-        List<Amende> unpaidAmendes = amendeRepositoryJDBC.findUnpaidByEmprunteur(emprunteur);
+        List<Amende> unpaidAmendes = AmendeRepositoryJDBC.findUnpaidByEmprunteur(emprunteur);
         double remainingPayment = montant;
         for (Amende amende : unpaidAmendes) {
             if (remainingPayment <= 0) break;
@@ -42,11 +42,11 @@ public class AmendeService {
     }
 
     public List<Amende> getAllAmendesByEmprunteur(Emprunteur emprunteur) {
-        return amendeRepositoryJDBC.findUnpaidByEmprunteur(emprunteur);
+        return AmendeRepositoryJDBC.findUnpaidByEmprunteur(emprunteur);
     }
 
     public List<Amende> getAmendesByDateRange(Date debut, Date fin) {
-        List<Amende> allAmendes = amendeRepositoryJDBC.findAll();
+        List<Amende> allAmendes = AmendeRepositoryJDBC.findAll();
         List<Amende> filteredAmendes = new ArrayList<>();
         for (Amende amende : allAmendes) {
             LocalDate creation = amende.getDateCreation();
@@ -58,6 +58,6 @@ public class AmendeService {
     }
 
     public List<Amende> getAllAmendes() {
-        return amendeRepositoryJDBC.findAll();
+        return AmendeRepositoryJDBC.findAll();
     }
 }

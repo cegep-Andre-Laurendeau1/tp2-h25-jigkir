@@ -7,10 +7,8 @@ import java.sql.*;
 public class JDBCclass {
     // JDBC driver name and database URL
     static final String JDBC_DRIVER = "org.h2.Driver";
-    static final String DB_URL = "jdbc:h2:mem:TP2;DB_CLOSE_DELAY=-1";
-
+    static final String DB_URL = "jdbc:h2:mem:TP2jigkir;DB_CLOSE_DELAY=-1";
     static final String QUERY = "SELECT id, first, last, age FROM Registration";
-
     static final String sqlPs = "SELECT id, first, last, age FROM Registration" +
             " WHERE id >= ? AND id <= ?";
 

@@ -7,41 +7,40 @@ import ca.cal.tp2.repository.DocumentRepositoryJDBC;
 import java.util.List;
 
 public class DocumentService {
-    private final DocumentRepositoryJDBC documentRepositoryJDBC;
+    private final DocumentRepositoryJDBC DocumentRepositoryJDBC;
 
     public DocumentService() {
-        this.documentRepositoryJDBC = new DocumentRepositoryJDBC();
+        this.DocumentRepositoryJDBC = new DocumentRepositoryJDBC();
     }
 
     public LivreDTO createInitialBook() {
-        return new LivreDTO(1L, "Java Programming", 5, "123456789", "John Doe", "TechBooks", 500);
-    }
+        return new LivreDTO(1L, "Java Programming", 5, "123456789", "John Doe", "TechBooks", 500);    }
 
     public boolean addDocument(Document document) {
-        return documentRepositoryJDBC.save(document);
+        return DocumentRepositoryJDBC.save(document);
     }
 
     public Document findById(Long documentId) {
-        return documentRepositoryJDBC.get(documentId);
+        return DocumentRepositoryJDBC.get(documentId);
     }
 
     public List<Document> searchByTitle(String title) {
-        return documentRepositoryJDBC.findByTitle(title);
+        return DocumentRepositoryJDBC.findByTitle(title);
     }
 
     public List<Document> searchByAuthor(String author) {
-        return documentRepositoryJDBC.findByAuthor(author);
+        return DocumentRepositoryJDBC.findByAuthor(author);
     }
 
     public List<Document> searchByPublisher(String publisher) {
-        return documentRepositoryJDBC.findByPublisher(publisher);
+        return DocumentRepositoryJDBC.findByPublisher(publisher);
     }
 
     public List<Document> searchByType(String type) {
-        return documentRepositoryJDBC.findByType(type);
+        return DocumentRepositoryJDBC.findByType(type);
     }
 
     public List<Document> getAllDocuments() {
-        return documentRepositoryJDBC.findAll();
+        return DocumentRepositoryJDBC.findAll();
     }
 }

@@ -1,0 +1,2115 @@
+package ca.cal.tp2;
+
+import ca.cal.tp2.service.dto.EmpruntDTO;
+import ca.cal.tp2.service.dto.EmprunteurDTO;
+import ca.cal.tp2.service.dto.LivreDTO;
+import ca.cal.tp2.model.Amende;
+import ca.cal.tp2.model.Emprunt;
+import ca.cal.tp2.model.Emprunteur;
+import ca.cal.tp2.model.Livre;
+import ca.cal.tp2.service.AmendeService;
+import ca.cal.tp2.service.DocumentService;
+import ca.cal.tp2.service.EmpruntService;
+import ca.cal.tp2.service.PreposeService;
+
+import java.sql.SQLException;
+import java.util.List;
+import java.util.stream.Collectors;
+
+public class Main {
+    public static void main(String[] args) throws SQLException, InterruptedException {
+        TcpServer.startTcpServer();
+
+        DocumentService documentService = new DocumentService();
+        EmpruntService empruntService = new EmpruntService();
+        AmendeService amendeService = new AmendeService();
+        PreposeService preposeService = new PreposeService();
+
+        // Create a LivreDTO
+        LivreDTO livreDTO = documentService.createInitialBook();
+
+        // Convert DTO to model and add document
+        Livre livre = convertToLivre(livreDTO);
+        documentService.addDocument(livre);
+
+        // Create an EmprunteurDTO
+        EmprunteurDTO emprunteurDTO = new EmprunteurDTO( "Alice", "alice@example.com", "1234567890" );
+
+        // Register new borrower using DTO
+        Emprunteur emprunteur = preposeService.inscrireNouvelEmprunteur(
+            emprunteurDTO.getNom(),
+            emprunteurDTO.getEmail(),
+            emprunteurDTO.getTelephone()
+        );
+
+        // Create loan
+        if (emprunteur != null && empruntService.createEmprunt(emprunteur, livre)) {
+            System.out.println("Document emprunté avec succès!");
+        } else {
+            System.out.println("Impossible d'emprunter le document.");
+        }
+
+        // Get loans and convert to DTOs
+        List<Emprunt> emprunts = empruntService.getEmpruntsForEmprunteur(emprunteur);
+        List<EmpruntDTO> empruntsDTO = emprunts.stream()
+            .map(Main::convertToEmpruntDTO)
+            .collect(Collectors.toList());
+        System.out.println("Historique des emprunts: " + empruntsDTO.size());
+
+        // Return document
+        if (empruntService.retournerDocument(emprunteur, livre)) {
+            System.out.println("Document retourné avec succès!");
+        } else {
+            System.out.println("Échec du retour du document.");
+        }
+
+        // Get fines
+        List<Amende> amendes = amendeService.getAllAmendesByEmprunteur(emprunteur);
+        System.out.println("Amendes impayées: " + amendes.size());
+
+        Thread.currentThread().join();
+    }
+
+    private static Livre convertToLivre(LivreDTO dto) {
+        return new Livre(
+            dto.getDocumentId(),
+            dto.getTitre(),
+            dto.getNbExemplaires(),
+            dto.getIsbn(),
+            dto.getAuteur(),
+            dto.getEditeur(),
+            dto.getNbPages()
+        );
+    }
+
+    private static EmpruntDTO convertToEmpruntDTO(Emprunt emprunt) {
+        return new EmpruntDTO(
+            emprunt.getBorrowID(),
+            emprunt.getEmprunteur().getId(),
+            emprunt.getStatus(),
+            emprunt.getDateEmprunt()
+        );
+    }
+}package ca.cal.tp2.model;
+
+import java.time.LocalDate;
+
+public class Amende {
+    private int id;
+    private double montant;
+    private LocalDate dateCreation;
+    private boolean status;
+    private Emprunteur emprunteur;
+    private EmpruntDetail empruntDetail;
+    
+    public Amende(int id, double montant, Emprunteur emprunteur, EmpruntDetail empruntDetail) {
+        this.id = id;
+        this.montant = montant;
+        this.dateCreation = LocalDate.now();
+        this.status = false;
+        this.emprunteur = emprunteur;
+        this.empruntDetail = empruntDetail;
+    }
+
+    public double calculMontant() {
+        if (empruntDetail == null) {
+            return 0.0;
+        }
+
+        long daysOverdue = empruntDetail.isEnRetard();
+        if (daysOverdue <= 0) {
+            return 0.0;
+        }
+
+        return daysOverdue * 0.25;
+    }
+
+    public void updateStatus() {
+        this.status = true;
+    }
+
+    public int getid() {
+        return id;
+    }
+
+    public void setid(int id) {
+        this.id = id;
+    }
+
+    public double getMontant() {
+        return montant;
+    }
+
+    public void setMontant(double montant) {
+        this.montant = montant;
+    }
+
+    public LocalDate getDateCreation() {
+        return dateCreation;
+    }
+
+    public void setDateCreation(LocalDate dateCreation) {
+        this.dateCreation = dateCreation;
+    }
+
+    public boolean isStatus() {
+        return status;
+    }
+
+    public void setStatus(boolean status) {
+        this.status = status;
+    }
+
+    public Emprunteur getEmprunteur() {
+        return emprunteur;
+    }
+
+    public void setEmprunteur(Emprunteur emprunteur) {
+        this.emprunteur = emprunteur;
+    }
+
+    public EmpruntDetail getEmpruntDetail() {
+        return empruntDetail;
+    }
+
+    public void setEmpruntDetail(EmpruntDetail empruntDetail) {
+        this.empruntDetail = empruntDetail;
+    }
+}package ca.cal.tp2.model;
+
+public class CD extends Document {
+    private String artiste;
+    private int duree;
+    private String genre;
+
+    public CD(Long documentID, String titre, int nombreExemplaires,
+              String artiste, int duree, String genre) {
+        super(documentID, titre, nombreExemplaires);
+        this.artiste = artiste;
+        this.duree = duree;
+        this.genre = genre;
+    }
+
+    @Override
+    public int getDureeEmprunt() {
+        return 14;
+    }
+
+    public String getArtiste() {
+        return artiste;
+    }
+
+    public void setArtiste(String artiste) {
+        this.artiste = artiste;
+    }
+
+    public int getDuree() {
+        return duree;
+    }
+
+    public void setDuree(int duree) {
+        this.duree = duree;
+    }
+
+    public String getGenre() {
+        return genre;
+    }
+
+    public void setGenre(String genre) {
+        this.genre = genre;
+    }
+}package ca.cal.tp2.model;
+
+public abstract class Document {
+    private Long documentID;
+    private String titre;
+    private int nombreExemplaires;
+
+    public Document(Long documentID, String titre, int nombreExemplaires) {
+        this.documentID = documentID;
+        this.titre = titre;
+        this.nombreExemplaires = nombreExemplaires;
+    }
+
+    public boolean verifieDisponibilite() {
+        return nombreExemplaires <= 0;
+    }
+
+    public abstract int getDureeEmprunt();
+
+    public Long getDocumentID() {
+        return documentID;
+    }
+
+    public void setDocumentID(Long documentID) {
+        this.documentID = documentID;
+    }
+
+    public String getTitre() {
+        return titre;
+    }
+
+    public void setTitre(String titre) {
+        this.titre = titre;
+    }
+
+    public int getNombreExemplaires() {
+        return nombreExemplaires;
+    }
+
+    public void setNombreExemplaires(int nombreExemplaires) {
+        this.nombreExemplaires = nombreExemplaires;
+    }
+
+    public void incrementExemplaires() {
+        this.nombreExemplaires++;
+    }
+
+    public void decrementExemplaires() {
+        if (this.nombreExemplaires > 0) {
+            this.nombreExemplaires--;
+        }
+    }
+}package ca.cal.tp2.model;
+
+public class DVD extends Document {
+    private String director;
+    private int duree;
+    private String rating;
+
+    public DVD(Long documentID, String titre, int nombreExemplaires,
+               String director, int duree, String rating) {
+        super(documentID, titre, nombreExemplaires);
+        this.director = director;
+        this.duree = duree;
+        this.rating = rating;
+    }
+
+    @Override
+    public int getDureeEmprunt() {
+        return 7;
+    }
+
+    public String getDirector() {
+        return director;
+    }
+
+    public void setDirector(String director) {
+        this.director = director;
+    }
+
+    public int getDuree() {
+        return duree;
+    }
+
+    public void setDuree(int duree) {
+        this.duree = duree;
+    }
+
+    public String getRating() {
+        return rating;
+    }
+
+    public void setRating(String rating) {
+        this.rating = rating;
+    }
+}package ca.cal.tp2.model;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+
+public class Emprunt {
+    private Long borrowID;
+    private LocalDate dateEmprunt;
+    private String status;
+    private Emprunteur emprunteur;
+    private List<EmpruntDetail> empruntDetails;
+
+    public Emprunt(Long borrowID, Emprunteur emprunteur) {
+        this.borrowID = borrowID;
+        this.dateEmprunt = LocalDate.now();
+        this.status = "Active";
+        this.emprunteur = emprunteur;
+        this.empruntDetails = new ArrayList<>();
+    }
+
+    public List<EmpruntDetail> getItems() {
+        return empruntDetails;
+    }
+
+    public void addEmpruntDetail(EmpruntDetail detail) {
+        empruntDetails.add(detail);
+    }
+
+    public Long getBorrowID() {
+        return borrowID;
+    }
+
+    public void setBorrowID(Long borrowID) {
+        this.borrowID = borrowID;
+    }
+
+    public LocalDate getDateEmprunt() {
+        return dateEmprunt;
+    }
+
+    public void setDateEmprunt(LocalDate dateEmprunt) {
+        this.dateEmprunt = dateEmprunt;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public Emprunteur getEmprunteur() {
+        return emprunteur;
+    }
+
+    public void setEmprunteur(Emprunteur emprunteur) {
+        this.emprunteur = emprunteur;
+    }
+
+    public List<EmpruntDetail> getEmpruntDetails() {
+        return empruntDetails;
+    }
+
+    public void setEmpruntDetails(List<EmpruntDetail> empruntDetails) {
+        this.empruntDetails = empruntDetails;
+    }
+}package ca.cal.tp2.model;
+
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+
+public class EmpruntDetail {
+    private int lineItemID;
+    private LocalDate dateRetourPrevue;
+    private LocalDate dateRetourActuelle;
+    private String status;
+    private Document document;
+    private Emprunt emprunt;
+
+    public EmpruntDetail(int lineItemID, Document document, Emprunt emprunt) {
+        this.lineItemID = lineItemID;
+        this.document = document;
+        this.emprunt = emprunt;
+        this.status = "Borrowed";
+
+        // Set the expected return date using LocalDate
+        this.dateRetourPrevue = LocalDate.now().plusDays(document.getDureeEmprunt());
+    }
+
+    public int getNombreExemplaires() {
+        return document.getNombreExemplaires();
+    }
+
+    public long isEnRetard() {
+        if (dateRetourActuelle != null) {
+            long diff = ChronoUnit.DAYS.between(dateRetourPrevue, dateRetourActuelle);
+            return diff > 0 ? diff : 0;
+        } else {
+            long diff = ChronoUnit.DAYS.between(dateRetourPrevue, LocalDate.now());
+            return diff > 0 ? diff : 0;
+        }
+    }
+
+    public double calculAmende() {
+        long daysOverdue = isEnRetard();
+        if (daysOverdue <= 0) {
+            return 0.0;
+        }
+        return daysOverdue * 0.25;
+    }
+
+    public void updateStatus() {
+        if (dateRetourActuelle != null) {
+            status = "Returned";
+        } else if (isEnRetard() > 0) {
+            status = "Overdue";
+        } else {
+            status = "Borrowed";
+        }
+    }
+
+    public int getLineItemID() {
+        return lineItemID;
+    }
+
+    public void setLineItemID(int lineItemID) {
+        this.lineItemID = lineItemID;
+    }
+
+    public LocalDate getDateRetourPrevue() {
+        return dateRetourPrevue;
+    }
+
+    public void setDateRetourPrevue(LocalDate dateRetourPrevue) {
+        this.dateRetourPrevue = dateRetourPrevue;
+    }
+
+    public LocalDate getDateRetourActuelle() {
+        return dateRetourActuelle;
+    }
+
+    public void setDateRetourActuelle(LocalDate dateRetourActuelle) {
+        this.dateRetourActuelle = dateRetourActuelle;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public Document getDocument() {
+        return document;
+    }
+
+    public void setDocument(Document document) {
+        this.document = document;
+    }
+
+    public Emprunt getEmprunt() {
+        return emprunt;
+    }
+
+    public void setEmprunt(Emprunt emprunt) {
+        this.emprunt = emprunt;
+    }
+}package ca.cal.tp2.model;
+
+import ca.cal.tp2.service.EmpruntService;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class Emprunteur extends Utilisateur {
+    private List<Emprunt> emprunts;
+    private double amendeBalance;
+
+    public Emprunteur(Long userID, String name, String email, String phoneNumber) {
+        super(userID, name, email, phoneNumber);
+        this.emprunts = new ArrayList<>();
+        this.amendeBalance = 0.0;
+    }
+
+    public boolean emprunte(Document document) {
+        if (this.amendeBalance > 0) {
+            return false;
+        }
+
+        if (document.verifieDisponibilite()) {
+            return false;
+        }
+
+        EmpruntService empruntService = new EmpruntService();
+        return empruntService.createEmprunt(this, document);
+    }
+
+    public boolean retourneDocument(Document document) {
+        EmpruntService empruntService = new EmpruntService();
+        return empruntService.retournerDocument(this, document);
+    }
+
+    public boolean payeAmende(double montant) {
+        if (montant <= 0 || montant > this.amendeBalance) {
+            return false;
+        }
+
+        this.amendeBalance -= montant;
+        return true;
+    }
+
+    public List<Emprunt> rapportHistoriqueEmprunt() {
+        EmpruntService empruntService = new EmpruntService();
+        return empruntService.getEmpruntsForEmprunteur(this);
+    }
+
+    public List<Emprunt> getEmprunts() {
+        return emprunts;
+    }
+
+    public void setEmprunts(List<Emprunt> emprunts) {
+        this.emprunts = emprunts;
+    }
+
+    public double getAmendeBalance() {
+        return amendeBalance;
+    }
+
+    public void setAmendeBalance(double amendeBalance) {
+        this.amendeBalance = amendeBalance;
+    }
+
+    public void addAmende(double montant) {
+        this.amendeBalance += montant;
+    }
+
+    public Long getId() {
+        return getUserID();
+    }
+}package ca.cal.tp2.model;
+
+public class Livre extends Document {
+    private String ISBN;
+    private String auteur;
+    private String editeur;
+    private int nombrePages;
+
+    public Livre(Long documentID, String titre, int nombreExemplaires,
+                 String ISBN, String auteur, String editeur, int nombrePages) {
+        super(documentID, titre, nombreExemplaires);
+        this.ISBN = ISBN;
+        this.auteur = auteur;
+        this.editeur = editeur;
+        this.nombrePages = nombrePages;
+    }
+
+    @Override
+    public int getDureeEmprunt() {
+        return 21;
+    }
+
+    public String getISBN() {
+        return ISBN;
+    }
+
+    public void setISBN(String ISBN) {
+        this.ISBN = ISBN;
+    }
+
+    public String getAuteur() {
+        return auteur;
+    }
+
+    public void setAuteur(String auteur) {
+        this.auteur = auteur;
+    }
+
+    public String getEditeur() {
+        return editeur;
+    }
+
+    public void setEditeur(String editeur) {
+        this.editeur = editeur;
+    }
+
+    public int getNombrePages() {
+        return nombrePages;
+    }
+
+    public void setNombrePages(int nombrePages) {
+        this.nombrePages = nombrePages;
+    }
+}package ca.cal.tp2.model;
+
+import ca.cal.tp2.service.AmendeService;
+import ca.cal.tp2.service.DocumentService;
+import ca.cal.tp2.service.EmpruntService;
+
+import java.util.List;
+
+public class Prepose extends Utilisateur {
+    public Prepose(Long userID, String name, String email, String phoneNumber) {
+        super(userID, name, email, phoneNumber);
+    }
+
+    public boolean entreNouveauDocument(Document document) {
+        DocumentService documentService = new DocumentService();
+        return documentService.addDocument(document);
+    }
+
+    public boolean collecteAmende(Emprunteur emprunteur, double montant) {
+        AmendeService amendeService = new AmendeService();
+        return amendeService.collectAmende(emprunteur, montant);
+    }
+
+    public List<Amende> rapportAmendes() {
+        AmendeService amendeService = new AmendeService();
+        return amendeService.getAllAmendes();
+    }
+
+    public List<Emprunt> rapportEmprunts() {
+        EmpruntService empruntService = new EmpruntService();
+        return empruntService.getAllEmprunts();
+    }
+}package ca.cal.tp2.model;
+
+public class Utilisateur {
+    private Long userID;
+    private String name;
+    private String email;
+    private String phoneNumber;
+
+    public Utilisateur(Long userID, String name, String email, String phoneNumber) {
+        this.userID = userID;
+        this.name = name;
+        this.email = email;
+        this.phoneNumber = phoneNumber;
+    }
+
+    public boolean login() {
+        return true;
+    }
+
+    public Long getUserID() { return userID; }
+
+    public void setUserID(Long userID) { this.userID = userID; }
+
+    public String getName() { return name; }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+}package ca.cal.tp2.repository;
+
+import ca.cal.tp2.model.Amende;
+import ca.cal.tp2.model.Emprunteur;
+
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class AmendeRepositoryJDBC extends ParentRepository<Amende> {
+
+    @Override
+    protected void createTables() {
+        executeUpdate("CREATE TABLE IF NOT EXISTS Utilisateur (" +
+                "userID INT PRIMARY KEY, " +
+                "name VARCHAR(255), " +
+                "email VARCHAR(255), " +
+                "phoneNumber VARCHAR(20), " +
+                "userType VARCHAR(20)" +
+                ")");
+
+        executeUpdate("CREATE TABLE IF NOT EXISTS Amende (" +
+                "id INT PRIMARY KEY, " +
+                "montant DOUBLE, " +
+                "dateCreation TIMESTAMP, " +
+                "status BOOLEAN, " +
+                "emprunteurID INT, " +
+                "FOREIGN KEY (emprunteurID) REFERENCES Utilisateur(userID)" +
+                ")");
+    }
+
+    public boolean save(Amende amende) {
+        if (amende.getEmprunteur() == null) {
+            System.err.println("Error: Emprunteur is null. Cannot save Amende.");
+            return false;
+        }
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(
+                     "INSERT INTO Amende (id, montant, dateCreation, status, emprunteurID) VALUES (?, ?, ?, ?, ?)")
+        ) {
+            pstmt.setInt(1, amende.getid());
+            pstmt.setDouble(2, amende.getMontant());
+            pstmt.setTimestamp(3, Timestamp.valueOf(amende.getDateCreation().atStartOfDay()));
+            pstmt.setBoolean(4, amende.isStatus());
+            pstmt.setLong(5, amende.getEmprunteur().getUserID());
+            pstmt.executeUpdate();
+            return true;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    @Override
+    public Amende get(Long id) {
+        return null;
+    }
+
+    public List<Amende> findAll() {
+        List<Amende> amendes = new ArrayList<>();
+        try (Connection conn = getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT * FROM Amende")) {
+
+            while (rs.next()) {
+                Amende amende = new Amende(
+                        rs.getInt("id"),
+                        rs.getDouble("montant"),
+                        null,
+                        null
+                );
+                amende.setStatus(rs.getBoolean("status"));
+                amende.setDateCreation(rs.getTimestamp("dateCreation").toLocalDateTime().toLocalDate());
+                amendes.add(amende);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return amendes;
+    }
+
+    @Override
+    public boolean update(Amende entity) {
+        return false;
+    }
+
+    public List<Amende> findUnpaidByEmprunteur(Emprunteur emprunteur) {
+        List<Amende> amendes = new ArrayList<>();
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement("SELECT * FROM Amende WHERE emprunteurID = ? AND status = FALSE")) {
+            pstmt.setLong(1, emprunteur.getUserID());
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                Amende amende = new Amende(
+                        rs.getInt("id"),
+                        rs.getDouble("montant"),
+                        emprunteur,
+                        null
+                );
+                amende.setStatus(rs.getBoolean("status"));
+                amendes.add(amende);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return amendes;
+    }
+}package ca.cal.tp2.repository;
+
+import ca.cal.tp2.model.*;
+
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class DocumentRepositoryJDBC extends ParentRepository<Document> {
+
+    @Override
+    protected void createTables() {
+        executeUpdate("CREATE TABLE IF NOT EXISTS Document " +
+                "(documentID INT PRIMARY KEY, " +
+                "titre VARCHAR(255), " +
+                "nombreExemplaires INT, " +
+                "documentType VARCHAR(20))");
+
+        executeUpdate("CREATE TABLE IF NOT EXISTS Livre " +
+                "(documentID INT PRIMARY KEY, " +
+                "ISBN VARCHAR(20), " +
+                "auteur VARCHAR(255), " +
+                "editeur VARCHAR(255), " +
+                "nombrePages INT, " +
+                "FOREIGN KEY (documentID) REFERENCES Document(documentID))");
+
+        executeUpdate("CREATE TABLE IF NOT EXISTS CD " +
+                "(documentID INT PRIMARY KEY, " +
+                "artiste VARCHAR(255), " +
+                "duree INT, " +
+                "genre VARCHAR(50), " +
+                "FOREIGN KEY (documentID) REFERENCES Document(documentID))");
+
+        executeUpdate("CREATE TABLE IF NOT EXISTS DVD " +
+                "(documentID INT PRIMARY KEY, " +
+                "director VARCHAR(255), " +
+                "duree INT, " +
+                "rating VARCHAR(10), " +
+                "FOREIGN KEY (documentID) REFERENCES Document(documentID))");
+    }
+
+    public boolean save(Document document) {
+        String documentType = "";
+        if (document instanceof Livre) {
+            documentType = "Livre";
+        } else if (document instanceof CD) {
+            documentType = "CD";
+        } else if (document instanceof DVD) {
+            documentType = "DVD";
+        }
+
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(
+                     "INSERT INTO Document (documentID, titre, nombreExemplaires, documentType) VALUES (?, ?, ?, ?)")) {
+
+            pstmt.setLong(1, document.getDocumentID());
+            pstmt.setString(2, document.getTitre());
+            pstmt.setInt(3, document.getNombreExemplaires());
+            pstmt.setString(4, documentType);
+
+            pstmt.executeUpdate();
+
+            if (document instanceof Livre) {
+                Livre livre = (Livre) document;
+                try (PreparedStatement pstmtLivre = conn.prepareStatement(
+                        "INSERT INTO Livre (documentID, ISBN, auteur, editeur, nombrePages) VALUES (?, ?, ?, ?, ?)")) {
+
+                    pstmtLivre.setLong(1, document.getDocumentID());
+                    pstmtLivre.setString(2, livre.getISBN());
+                    pstmtLivre.setString(3, livre.getAuteur());
+                    pstmtLivre.setString(4, livre.getEditeur());
+                    pstmtLivre.setInt(5, livre.getNombrePages());
+                    pstmtLivre.executeUpdate();
+                }
+            } else if (document instanceof CD) {
+                CD cd = (CD) document;
+                try (PreparedStatement pstmtCD = conn.prepareStatement(
+                        "INSERT INTO CD (documentID, artiste, duree, genre) VALUES (?, ?, ?, ?)")) {
+
+                    pstmtCD.setLong(1, document.getDocumentID());
+                    pstmtCD.setString(2, cd.getArtiste());
+                    pstmtCD.setInt(3, cd.getDuree());
+                    pstmtCD.setString(4, cd.getGenre());
+                    pstmtCD.executeUpdate();
+                }
+            } else if (document instanceof DVD) {
+                DVD dvd = (DVD) document;
+                try (PreparedStatement pstmtDVD = conn.prepareStatement(
+                        "INSERT INTO DVD (documentID, director, duree, rating) VALUES (?, ?, ?, ?)")) {
+
+                    pstmtDVD.setLong(1, document.getDocumentID());
+                    pstmtDVD.setString(2, dvd.getDirector());
+                    pstmtDVD.setInt(3, dvd.getDuree());
+                    pstmtDVD.setString(4, dvd.getRating());
+                    pstmtDVD.executeUpdate();
+                }
+            }
+
+            return true;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public Document get(Long documentID) {
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement("SELECT * FROM Document WHERE documentID = ?")) {
+
+            pstmt.setLong(1, documentID);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                String documentType = rs.getString("documentType");
+
+                if ("Livre".equals(documentType)) {
+                    try (PreparedStatement pstmtLivre = conn.prepareStatement(
+                            "SELECT * FROM Livre WHERE documentID = ?")) {
+
+                        pstmtLivre.setLong(1, documentID);
+                        ResultSet rsLivre = pstmtLivre.executeQuery();
+
+                        if (rsLivre.next()) {
+                            Livre livre = new Livre(
+                                    documentID,
+                                    rs.getString("titre"),
+                                    rs.getInt("nombreExemplaires"),
+                                    rsLivre.getString("ISBN"),
+                                    rsLivre.getString("auteur"),
+                                    rsLivre.getString("editeur"),
+                                    rsLivre.getInt("nombrePages"));
+
+                            return livre;
+                        }
+                    }
+                } else if ("CD".equals(documentType)) {
+                    try (PreparedStatement pstmtCD = conn.prepareStatement(
+                            "SELECT * FROM CD WHERE documentID = ?")) {
+
+                        pstmtCD.setLong(1, documentID);
+                        ResultSet rsCD = pstmtCD.executeQuery();
+
+                        if (rsCD.next()) {
+                            CD cd = new CD(
+                                    documentID,
+                                    rs.getString("titre"),
+                                    rs.getInt("nombreExemplaires"),
+                                    rsCD.getString("artiste"),
+                                    rsCD.getInt("duree"),
+                                    rsCD.getString("genre"));
+
+                            return cd;
+                        }
+                    }
+                } else if ("DVD".equals(documentType)) {
+                    try (PreparedStatement pstmtDVD = conn.prepareStatement(
+                            "SELECT * FROM DVD WHERE documentID = ?")) {
+
+                        pstmtDVD.setLong(1, documentID);
+                        ResultSet rsDVD = pstmtDVD.executeQuery();
+
+                        if (rsDVD.next()) {
+                            DVD dvd = new DVD(
+                                    documentID,
+                                    rs.getString("titre"),
+                                    rs.getInt("nombreExemplaires"),
+                                    rsDVD.getString("director"),
+                                    rsDVD.getInt("duree"),
+                                    rsDVD.getString("rating"));
+
+                            return dvd;
+                        }
+                    }
+                }
+            }
+
+            return null;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    @Override
+    public List<Document> findAll() {
+        List<Document> documents = new ArrayList<>();
+
+        try (Connection conn = getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT * FROM Document")) {
+
+            while (rs.next()) {
+                Long documentID = rs.getLong("documentID");
+                String documentType = rs.getString("documentType");
+
+                Document document = get(documentID);
+                if (document != null) {
+                    documents.add(document);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return documents;
+    }
+
+    @Override
+    public boolean update(Document document) {
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(
+                     "UPDATE Document SET titre = ?, nombreExemplaires = ? WHERE documentID = ?")) {
+
+            pstmt.setString(1, document.getTitre());
+            pstmt.setInt(2, document.getNombreExemplaires());
+            pstmt.setLong(3, document.getDocumentID());
+
+            pstmt.executeUpdate();
+
+            if (document instanceof Livre) {
+                Livre livre = (Livre) document;
+                try (PreparedStatement pstmtLivre = conn.prepareStatement(
+                        "UPDATE Livre SET ISBN = ?, auteur = ?, editeur = ?, nombrePages = ? WHERE documentID = ?")) {
+
+                    pstmtLivre.setString(1, livre.getISBN());
+                    pstmtLivre.setString(2, livre.getAuteur());
+                    pstmtLivre.setString(3, livre.getEditeur());
+                    pstmtLivre.setInt(4, livre.getNombrePages());
+                    pstmtLivre.setLong(5, document.getDocumentID());
+                    pstmtLivre.executeUpdate();
+                }
+            } else if (document instanceof CD) {
+                CD cd = (CD) document;
+                try (PreparedStatement pstmtCD = conn.prepareStatement(
+                        "UPDATE CD SET artiste = ?, duree = ?, genre = ? WHERE documentID = ?")) {
+
+                    pstmtCD.setString(1, cd.getArtiste());
+                    pstmtCD.setInt(2, cd.getDuree());
+                    pstmtCD.setString(3, cd.getGenre());
+                    pstmtCD.setLong(4, document.getDocumentID());
+                    pstmtCD.executeUpdate();
+                }
+            } else if (document instanceof DVD) {
+                DVD dvd = (DVD) document;
+                try (PreparedStatement pstmtDVD = conn.prepareStatement(
+                        "UPDATE DVD SET director = ?, duree = ?, rating = ? WHERE documentID = ?")) {
+
+                    pstmtDVD.setString(1, dvd.getDirector());
+                    pstmtDVD.setInt(2, dvd.getDuree());
+                    pstmtDVD.setString(3, dvd.getRating());
+                    pstmtDVD.setLong(4, document.getDocumentID());
+                    pstmtDVD.executeUpdate();
+                }
+            }
+
+            return true;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public List<Document> findByTitle(String title) {
+        List<Document> documents = new ArrayList<>();
+
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(
+                     "SELECT * FROM Document WHERE LOWER(titre) LIKE ?")) {
+
+            pstmt.setString(1, "%" + title.toLowerCase() + "%");
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                documents.add(get(rs.getLong("documentID")));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return documents;
+    }
+
+    public List<Document> findByAuthor(String author) {
+        List<Document> documents = new ArrayList<>();
+
+        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
+             PreparedStatement pstmt = conn.prepareStatement(
+                     "SELECT d.* FROM Document d JOIN Livre l ON d.documentID = l.documentID WHERE LOWER(l.auteur) LIKE ?")) {
+
+            pstmt.setString(1, "%" + author.toLowerCase() + "%");
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                documents.add(get(rs.getLong("documentID")));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return documents;
+    }
+
+    public List<Document> findByPublisher(String publisher) {
+        List<Document> documents = new ArrayList<>();
+
+        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
+             PreparedStatement pstmt = conn.prepareStatement(
+                     "SELECT d.* FROM Document d JOIN Livre l ON d.documentID = l.documentID WHERE LOWER(l.editeur) LIKE ?")) {
+
+            pstmt.setString(1, "%" + publisher.toLowerCase() + "%");
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                documents.add(get(rs.getLong("documentID")));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return documents;
+    }
+
+    public List<Document> findByType(String type) {
+        List<Document> documents = new ArrayList<>();
+
+        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
+             PreparedStatement pstmt = conn.prepareStatement(
+                     "SELECT * FROM Document WHERE LOWER(documentType) = ?")) {
+
+            pstmt.setString(1, type.toLowerCase());
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                documents.add(get(rs.getLong("documentID")));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return documents;
+    }
+}package ca.cal.tp2.repository;
+
+import ca.cal.tp2.model.Document;
+import ca.cal.tp2.model.Emprunt;
+import ca.cal.tp2.model.EmpruntDetail;
+import ca.cal.tp2.model.Emprunteur;
+
+import java.sql.*;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+
+public class EmpruntRepositoryJDBC extends ParentRepository<Emprunt> {
+
+    @Override
+    protected void createTables() {
+        executeUpdate("CREATE TABLE IF NOT EXISTS emprunt (" +
+                "id INT PRIMARY KEY, " +
+                "emprunteur_id INT, " +
+                "date_emprunt TIMESTAMP, " +
+                "status VARCHAR(50))");
+
+        executeUpdate("CREATE TABLE IF NOT EXISTS emprunt_detail (" +
+                "id INT PRIMARY KEY, " +
+                "emprunt_id INT, " +
+                "document_id INT, " +
+                "date_retour_prevue TIMESTAMP, " +
+                "date_retour_actuelle TIMESTAMP, " +
+                "status VARCHAR(50))");
+    }
+
+    public boolean save(Emprunt emprunt) {
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(
+                     "INSERT INTO emprunt (id, emprunteur_id, date_emprunt, status) VALUES (?, ?, ?, ?)")) {
+
+            pstmt.setLong(1, emprunt.getBorrowID());
+            pstmt.setLong(2, emprunt.getEmprunteur().getUserID());
+            pstmt.setTimestamp(3, Timestamp.valueOf(emprunt.getDateEmprunt().atStartOfDay()));
+            pstmt.setString(4, emprunt.getStatus());
+
+            int result = pstmt.executeUpdate();
+
+            for (EmpruntDetail detail : emprunt.getEmpruntDetails()) {
+                saveEmpruntDetail(detail);
+            }
+
+            return result > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    @Override
+    public Emprunt get(Long id) {
+        return null; // Implementation can be added as needed
+    }
+
+    private boolean saveEmpruntDetail(EmpruntDetail detail) {
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(
+                     "INSERT INTO emprunt_detail (id, emprunt_id, document_id, date_retour_prevue, date_retour_actuelle, status) " +
+                             "VALUES (?, ?, ?, ?, ?, ?)")) {
+
+            pstmt.setInt(1, detail.getLineItemID());
+            pstmt.setLong(2, detail.getEmprunt().getBorrowID());
+            pstmt.setLong(3, detail.getDocument().getDocumentID());
+
+            // Convert LocalDate to Timestamp for date_retour_prevue
+            if (detail.getDateRetourPrevue() != null) {
+                pstmt.setTimestamp(4, Timestamp.valueOf(detail.getDateRetourPrevue().atStartOfDay()));
+            } else {
+                pstmt.setNull(4, Types.TIMESTAMP);
+            }
+
+            // Convert LocalDate to Timestamp for date_retour_actuelle if it's not null
+            if (detail.getDateRetourActuelle() != null) {
+                pstmt.setTimestamp(5, Timestamp.valueOf(detail.getDateRetourActuelle().atStartOfDay()));
+            } else {
+                pstmt.setNull(5, Types.TIMESTAMP);
+            }
+
+            pstmt.setString(6, detail.getStatus());
+
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean update(Emprunt emprunt) {
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(
+                     "UPDATE emprunt SET emprunteur_id = ?, date_emprunt = ?, status = ? WHERE id = ?")) {
+
+            pstmt.setLong(1, emprunt.getEmprunteur().getUserID());
+            pstmt.setTimestamp(2, Timestamp.valueOf(emprunt.getDateEmprunt().atStartOfDay()));
+            pstmt.setString(3, emprunt.getStatus());
+            pstmt.setLong(4, emprunt.getBorrowID());
+
+            int result = pstmt.executeUpdate();
+
+            for (EmpruntDetail detail : emprunt.getEmpruntDetails()) {
+                updateEmpruntDetail(detail);
+            }
+
+            return result > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private boolean updateEmpruntDetail(EmpruntDetail detail) {
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(
+                     "UPDATE emprunt_detail SET emprunt_id = ?, document_id = ?, date_retour_prevue = ?, " +
+                             "date_retour_actuelle = ?, status = ? WHERE id = ?")) {
+
+            pstmt.setLong(1, detail.getEmprunt().getBorrowID());
+            pstmt.setLong(2, detail.getDocument().getDocumentID());
+
+            // Convert LocalDate to Timestamp for date_retour_prevue
+            if (detail.getDateRetourPrevue() != null) {
+                pstmt.setTimestamp(3, Timestamp.valueOf(detail.getDateRetourPrevue().atStartOfDay()));
+            } else {
+                pstmt.setNull(3, Types.TIMESTAMP);
+            }
+
+            // Convert LocalDate to Timestamp for date_retour_actuelle
+            if (detail.getDateRetourActuelle() != null) {
+                pstmt.setTimestamp(4, Timestamp.valueOf(detail.getDateRetourActuelle().atStartOfDay()));
+            } else {
+                pstmt.setNull(4, Types.TIMESTAMP);
+            }
+
+            pstmt.setString(5, detail.getStatus());
+            pstmt.setInt(6, detail.getLineItemID());
+
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public List<Emprunt> findByEmprunteur(Emprunteur emprunteur) {
+        List<Emprunt> emprunts = new ArrayList<>();
+
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(
+                     "SELECT id, emprunteur_id, date_emprunt, status FROM emprunt WHERE emprunteur_id = ?")) {
+
+            pstmt.setLong(1, emprunteur.getUserID());
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                Emprunt emprunt = new Emprunt(
+                        rs.getLong("id"),
+                        emprunteur
+                );
+                emprunt.setDateEmprunt(rs.getTimestamp("date_emprunt").toLocalDateTime().toLocalDate()); // Convert Timestamp to LocalDate
+                emprunt.setStatus(rs.getString("status"));
+
+                loadEmpruntDetails(emprunt);
+
+                emprunts.add(emprunt);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return emprunts;
+    }
+
+    private void loadEmpruntDetails(Emprunt emprunt) {
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(
+                     "SELECT ed.*, d.* FROM emprunt_detail ed JOIN Document d ON ed.document_id = d.documentID WHERE ed.emprunt_id = ?"
+             )) {
+
+            pstmt.setLong(1, emprunt.getBorrowID());
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                Document document = loadDocument(rs);
+
+                if (document != null) {
+                    EmpruntDetail detail = new EmpruntDetail(
+                            rs.getInt("id"),
+                            document,
+                            emprunt
+                    );
+
+                    // Convert Timestamp to LocalDate for date_retour_prevue
+                    if (rs.getTimestamp("date_retour_prevue") != null) {
+                        detail.setDateRetourPrevue(rs.getTimestamp("date_retour_prevue").toLocalDateTime().toLocalDate());
+                    }
+
+                    // Convert Timestamp to LocalDate for date_retour_actuelle
+                    if (rs.getTimestamp("date_retour_actuelle") != null) {
+                        detail.setDateRetourActuelle(rs.getTimestamp("date_retour_actuelle").toLocalDateTime().toLocalDate());
+                    }
+
+                    detail.setStatus(rs.getString("status"));
+
+                    emprunt.addEmpruntDetail(detail);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private Document loadDocument(ResultSet rs) throws SQLException {
+        DocumentRepositoryJDBC documentRepo = new DocumentRepositoryJDBC();
+        return documentRepo.get(rs.getLong("document_id"));
+    }
+
+    public List<Emprunt> findAll() {
+        List<Emprunt> emprunts = new ArrayList<>();
+        UtilisateurRepositoryJDBC utilisateurRepo = new UtilisateurRepositoryJDBC();
+
+        try (Connection conn = getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT id, emprunteur_id, date_emprunt, status FROM emprunt")) {
+
+            while (rs.next()) {
+                Emprunteur emprunteur = (Emprunteur) utilisateurRepo.get(rs.getLong("emprunteur_id"));
+
+                if (emprunteur != null) {
+                    Emprunt emprunt = new Emprunt(
+                            rs.getLong("id"),
+                            emprunteur
+                    );
+                    emprunt.setDateEmprunt(rs.getTimestamp("date_emprunt").toLocalDateTime().toLocalDate());
+                    emprunt.setStatus(rs.getString("status"));
+
+                    loadEmpruntDetails(emprunt);
+
+                    emprunts.add(emprunt);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return emprunts;
+    }
+
+    public List<Emprunt> findByMonth(int month, int year) {
+        List<Emprunt> emprunts = new ArrayList<>();
+        UtilisateurRepositoryJDBC utilisateurRepo = new UtilisateurRepositoryJDBC();
+
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(
+                     "SELECT id, emprunteur_id, date_emprunt, status FROM emprunt WHERE MONTH(date_emprunt) = ? AND YEAR(date_emprunt) = ?")) {
+
+            pstmt.setInt(1, month);
+            pstmt.setInt(2, year);
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                Emprunteur emprunteur = (Emprunteur) utilisateurRepo.get(rs.getLong("emprunteur_id"));
+
+                if (emprunteur != null) {
+                    Emprunt emprunt = new Emprunt(
+                            rs.getLong("id"),
+                            emprunteur
+                    );
+                    emprunt.setDateEmprunt(rs.getTimestamp("date_emprunt").toLocalDateTime().toLocalDate());
+                    emprunt.setStatus(rs.getString("status"));
+
+                    loadEmpruntDetails(emprunt);
+
+                    emprunts.add(emprunt);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return emprunts;
+    }
+
+    public List<EmpruntDetail> findUpcomingReturns(int daysAhead) {
+        List<EmpruntDetail> upcomingReturns = new ArrayList<>();
+
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(
+                     "SELECT ed.*, e.emprunteur_id FROM emprunt_detail ed " +
+                             "JOIN emprunt e ON ed.emprunt_id = e.id " +
+                             "WHERE ed.date_retour_prevue BETWEEN ? AND ? AND ed.date_retour_actuelle IS NULL")) {
+
+            pstmt.setTimestamp(1, Timestamp.valueOf(LocalDate.now().atStartOfDay()));
+            pstmt.setTimestamp(2, Timestamp.valueOf(LocalDate.now().plusDays(daysAhead).atStartOfDay()));
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                UtilisateurRepositoryJDBC utilisateurRepo = new UtilisateurRepositoryJDBC();
+                Emprunteur emprunteur = (Emprunteur) utilisateurRepo.get(rs.getLong("emprunteur_id"));
+
+                if (emprunteur != null) {
+                    Emprunt emprunt = new Emprunt(rs.getLong("emprunt_id"), emprunteur);
+                    DocumentRepositoryJDBC documentRepo = new DocumentRepositoryJDBC();
+                    Document document = documentRepo.get(rs.getLong("document_id"));
+
+                    if (document != null) {
+                        EmpruntDetail detail = new EmpruntDetail(
+                                rs.getInt("id"),
+                                document,
+                                emprunt
+                        );
+                        detail.setDateRetourPrevue(rs.getTimestamp("date_retour_prevue").toLocalDateTime().toLocalDate());
+                        detail.setStatus(rs.getString("status"));
+
+                        upcomingReturns.add(detail);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return upcomingReturns;
+    }
+
+    public List<Emprunt> findByDocument(Document document) {
+        List<Emprunt> emprunts = new ArrayList<>();
+        UtilisateurRepositoryJDBC utilisateurRepo = new UtilisateurRepositoryJDBC();
+
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(
+                     "SELECT DISTINCT e.* FROM emprunt e " +
+                             "JOIN emprunt_detail ed ON e.id = ed.emprunt_id " +
+                             "WHERE ed.document_id = ?")) {
+
+            pstmt.setLong(1, document.getDocumentID());
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                Emprunteur emprunteur = (Emprunteur) utilisateurRepo.get(rs.getLong("emprunteur_id"));
+
+                if (emprunteur != null) {
+                    Emprunt emprunt = new Emprunt(
+                            rs.getLong("id"),
+                            emprunteur
+                    );
+                    emprunt.setDateEmprunt(rs.getTimestamp("date_emprunt").toLocalDateTime().toLocalDate());
+                    emprunt.setStatus(rs.getString("status"));
+
+                    loadEmpruntDetails(emprunt);
+
+                    emprunts.add(emprunt);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return emprunts;
+    }
+}package ca.cal.tp2.repository;
+
+import java.util.List;
+
+public interface IBaseRepository<T> {
+    boolean save(T entity);
+    T get(Long id);
+    List<T> findAll();
+    boolean update(T entity);
+}package ca.cal.tp2.repository;
+
+import java.sql.*;
+import java.util.List;
+
+public abstract class ParentRepository<T> implements IBaseRepository<T> {
+    protected static final String JDBC_DRIVER = "org.h2.Driver";
+    protected static final String DB_URL = "jdbc:h2:mem:TP2;DB_CLOSE_DELAY=-1";
+    protected static final String USER = "sa";
+    protected static final String PASS = "1";
+
+    public ParentRepository() {
+        try {
+            Class.forName(JDBC_DRIVER);
+            createTables();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    protected Connection getConnection() throws SQLException {
+        return DriverManager.getConnection(DB_URL, USER, PASS);
+    }
+
+    protected abstract void createTables();
+
+    protected boolean executeUpdate(String sql) {
+        try (Connection conn = getConnection();
+             Statement stmt = conn.createStatement()) {
+            stmt.executeUpdate(sql);
+            return true;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    protected boolean executeBatch(List<String> sqlStatements) {
+        Connection conn = null;
+        Statement stmt = null;
+
+        try {
+            conn = getConnection();
+            conn.setAutoCommit(false);
+            stmt = conn.createStatement();
+
+            for (String sql : sqlStatements) {
+                stmt.addBatch(sql);
+            }
+
+            stmt.executeBatch();
+            conn.commit();
+            return true;
+        } catch (SQLException e) {
+            try {
+                if (conn != null) conn.rollback();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+            e.printStackTrace();
+            return false;
+        } finally {
+            try {
+                if (stmt != null) stmt.close();
+                if (conn != null) {
+                    conn.setAutoCommit(true);
+                    conn.close();
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    @Override
+    public abstract boolean save(T entity);
+
+    @Override
+    public abstract T get(Long id);
+
+    @Override
+    public abstract List<T> findAll();
+
+    @Override
+    public abstract boolean update(T entity);
+}package ca.cal.tp2.repository;
+
+import ca.cal.tp2.model.Emprunteur;
+import ca.cal.tp2.model.Prepose;
+import ca.cal.tp2.model.Utilisateur;
+
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class UtilisateurRepositoryJDBC extends ParentRepository<Utilisateur> {
+
+    @Override
+    protected void createTables() {
+        executeUpdate("CREATE TABLE IF NOT EXISTS Utilisateur " +
+                "(userID INT PRIMARY KEY, " +
+                "name VARCHAR(255), " +
+                "email VARCHAR(255), " +
+                "phoneNumber VARCHAR(20), " +
+                "userType VARCHAR(20))");
+
+        executeUpdate("CREATE TABLE IF NOT EXISTS Emprunteur " +
+                "(userID INT PRIMARY KEY, " +
+                "amendeBalance DOUBLE, " +
+                "FOREIGN KEY (userID) REFERENCES Utilisateur(userID))");
+
+        executeUpdate("CREATE TABLE IF NOT EXISTS Prepose " +
+                "(userID INT PRIMARY KEY, " +
+                "FOREIGN KEY (userID) REFERENCES Utilisateur(userID))");
+    }
+
+    public boolean save(Utilisateur utilisateur) {
+        String userType = "";
+        if (utilisateur instanceof Emprunteur) {
+            userType = "Emprunteur";
+        } else if (utilisateur instanceof Prepose) {
+            userType = "Prepose";
+        }
+
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(
+                     "INSERT INTO Utilisateur (userID, name, email, phoneNumber, userType) VALUES (?, ?, ?, ?, ?)")) {
+
+            pstmt.setLong(1, utilisateur.getUserID());
+            pstmt.setString(2, utilisateur.getName());
+            pstmt.setString(3, utilisateur.getEmail());
+            pstmt.setString(4, utilisateur.getPhoneNumber());
+            pstmt.setString(5, userType);
+
+            pstmt.executeUpdate();
+
+            if (utilisateur instanceof Emprunteur) {
+                try (PreparedStatement pstmtEmpr = conn.prepareStatement(
+                        "INSERT INTO Emprunteur (userID, amendeBalance) VALUES (?, ?)")) {
+
+                    pstmtEmpr.setLong(1, utilisateur.getUserID());
+                    pstmtEmpr.setDouble(2, ((Emprunteur) utilisateur).getAmendeBalance());
+                    pstmtEmpr.executeUpdate();
+                }
+            } else if (utilisateur instanceof Prepose) {
+                try (PreparedStatement pstmtPrep = conn.prepareStatement(
+                        "INSERT INTO Prepose (userID) VALUES (?)")) {
+
+                    pstmtPrep.setLong(1, utilisateur.getUserID());
+                    pstmtPrep.executeUpdate();
+                }
+            }
+
+            return true;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public Utilisateur get(Long userID) {
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(
+                     "SELECT * FROM Utilisateur WHERE userID = ?")) {
+
+            pstmt.setLong(1, userID);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                String userType = rs.getString("userType");
+
+                if ("Emprunteur".equals(userType)) {
+                    try (PreparedStatement pstmtEmpr = conn.prepareStatement(
+                            "SELECT * FROM Emprunteur WHERE userID = ?")) {
+
+                        pstmtEmpr.setLong(1, userID);
+                        ResultSet rsEmpr = pstmtEmpr.executeQuery();
+
+                        if (rsEmpr.next()) {
+                            Emprunteur emprunteur = new Emprunteur(
+                                    userID,
+                                    rs.getString("name"),
+                                    rs.getString("email"),
+                                    rs.getString("phoneNumber"));
+
+                            emprunteur.setAmendeBalance(rsEmpr.getDouble("amendeBalance"));
+
+                            return emprunteur;
+                        }
+                    }
+                } else if ("Prepose".equals(userType)) {
+                    Prepose prepose = new Prepose(
+                            userID,
+                            rs.getString("name"),
+                            rs.getString("email"),
+                            rs.getString("phoneNumber"));
+
+                    return prepose;
+                }
+            }
+
+            return null;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public List<Utilisateur> findAll() {
+        List<Utilisateur> utilisateurs = new ArrayList<>();
+
+        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT * FROM Utilisateur")) {
+
+            while (rs.next()) {
+                Long userID = rs.getLong("userID");
+                String userType = rs.getString("userType");
+
+                if ("Emprunteur".equals(userType)) {
+                    try (PreparedStatement pstmtEmpr = conn.prepareStatement(
+                            "SELECT * FROM Emprunteur WHERE userID = ?")) {
+
+                        pstmtEmpr.setLong(1, userID);
+                        ResultSet rsEmpr = pstmtEmpr.executeQuery();
+
+                        if (rsEmpr.next()) {
+                            Emprunteur emprunteur = new Emprunteur(
+                                    userID,
+                                    rs.getString("name"),
+                                    rs.getString("email"),
+                                    rs.getString("phoneNumber"));
+
+                            emprunteur.setAmendeBalance(rsEmpr.getDouble("amendeBalance"));
+                            utilisateurs.add(emprunteur);
+                        }
+                    }
+                } else if ("Prepose".equals(userType)) {
+                    Prepose prepose = new Prepose(
+                            userID,
+                            rs.getString("name"),
+                            rs.getString("email"),
+                            rs.getString("phoneNumber"));
+
+                    utilisateurs.add(prepose);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return utilisateurs;
+    }
+
+    public boolean update(Utilisateur utilisateur) {
+        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
+             PreparedStatement pstmt = conn.prepareStatement(
+                     "UPDATE Utilisateur SET name = ?, email = ?, phoneNumber = ? WHERE userID = ?")) {
+
+            pstmt.setString(1, utilisateur.getName());
+            pstmt.setString(2, utilisateur.getEmail());
+            pstmt.setString(3, utilisateur.getPhoneNumber());
+            pstmt.setLong(4, utilisateur.getUserID());
+
+            pstmt.executeUpdate();
+
+            if (utilisateur instanceof Emprunteur) {
+                try (PreparedStatement pstmtEmpr = conn.prepareStatement(
+                        "UPDATE Emprunteur SET amendeBalance = ? WHERE userID = ?")) {
+
+                    pstmtEmpr.setDouble(1, ((Emprunteur) utilisateur).getAmendeBalance());
+                    pstmtEmpr.setLong(2, utilisateur.getUserID());
+                    pstmtEmpr.executeUpdate();
+                }
+            }
+
+            return true;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public List<Emprunteur> findAllEmprunteurs() {
+        List<Emprunteur> emprunteurs = new ArrayList<>();
+
+        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
+             PreparedStatement pstmt = conn.prepareStatement(
+                     "SELECT u.*, e.amendeBalance FROM Utilisateur u JOIN Emprunteur e ON u.userID = e.userID")) {
+
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                Emprunteur emprunteur = new Emprunteur(
+                        rs.getLong("userID"),
+                        rs.getString("name"),
+                        rs.getString("email"),
+                        rs.getString("phoneNumber"));
+
+                emprunteur.setAmendeBalance(rs.getDouble("amendeBalance"));
+                emprunteurs.add(emprunteur);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return emprunteurs;
+    }
+}package ca.cal.tp2.service;
+
+import ca.cal.tp2.model.Amende;
+import ca.cal.tp2.model.EmpruntDetail;
+import ca.cal.tp2.model.Emprunteur;
+import ca.cal.tp2.repository.AmendeRepositoryJDBC;
+
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+public class AmendeService {
+    private final AmendeRepositoryJDBC AmendeRepositoryJDBC = new AmendeRepositoryJDBC();
+    private static int nextAmendeId = 1;
+
+    public Amende createAmende(Emprunteur emprunteur, EmpruntDetail empruntDetail, double montant) {
+        Amende amende = new Amende(nextAmendeId++, montant, emprunteur, empruntDetail);
+        emprunteur.addAmende(montant);
+        AmendeRepositoryJDBC.save(amende);
+        return amende;
+    }
+
+    public boolean collectAmende(Emprunteur emprunteur, double montant) {
+        if (montant <= 0 || montant > emprunteur.getAmendeBalance()) {
+            return false;
+        }
+        List<Amende> unpaidAmendes = AmendeRepositoryJDBC.findUnpaidByEmprunteur(emprunteur);
+        double remainingPayment = montant;
+        for (Amende amende : unpaidAmendes) {
+            if (remainingPayment <= 0) break;
+            if (remainingPayment >= amende.getMontant()) {
+                amende.updateStatus();
+                remainingPayment -= amende.getMontant();
+            } else {
+                break;
+            }
+        }
+        emprunteur.setAmendeBalance(emprunteur.getAmendeBalance() - montant);
+        return true;
+    }
+
+    public List<Amende> getAllAmendesByEmprunteur(Emprunteur emprunteur) {
+        return AmendeRepositoryJDBC.findUnpaidByEmprunteur(emprunteur);
+    }
+
+    public List<Amende> getAmendesByDateRange(Date debut, Date fin) {
+        List<Amende> allAmendes = AmendeRepositoryJDBC.findAll();
+        List<Amende> filteredAmendes = new ArrayList<>();
+        for (Amende amende : allAmendes) {
+            LocalDate creation = amende.getDateCreation();
+            if (creation != null && !creation.isBefore(debut.toInstant().atZone(ZoneId.systemDefault()).toLocalDate()) && !creation.isAfter(fin.toInstant().atZone(ZoneId.systemDefault()).toLocalDate())) {
+                filteredAmendes.add(amende);
+            }
+        }
+        return filteredAmendes;
+    }
+
+    public List<Amende> getAllAmendes() {
+        return AmendeRepositoryJDBC.findAll();
+    }
+}package ca.cal.tp2.service;
+
+import ca.cal.tp2.model.Document;
+import ca.cal.tp2.service.dto.LivreDTO;
+import ca.cal.tp2.repository.DocumentRepositoryJDBC;
+
+import java.util.List;
+
+public class DocumentService {
+    private final DocumentRepositoryJDBC DocumentRepositoryJDBC;
+
+    public DocumentService() {
+        this.DocumentRepositoryJDBC = new DocumentRepositoryJDBC();
+    }
+
+    public LivreDTO createInitialBook() {
+        return new LivreDTO(1L, "Java Programming", 5, "123456789", "John Doe", "TechBooks", 500);    }
+
+    public boolean addDocument(Document document) {
+        return DocumentRepositoryJDBC.save(document);
+    }
+
+    public Document findById(Long documentId) {
+        return DocumentRepositoryJDBC.get(documentId);
+    }
+
+    public List<Document> searchByTitle(String title) {
+        return DocumentRepositoryJDBC.findByTitle(title);
+    }
+
+    public List<Document> searchByAuthor(String author) {
+        return DocumentRepositoryJDBC.findByAuthor(author);
+    }
+
+    public List<Document> searchByPublisher(String publisher) {
+        return DocumentRepositoryJDBC.findByPublisher(publisher);
+    }
+
+    public List<Document> searchByType(String type) {
+        return DocumentRepositoryJDBC.findByType(type);
+    }
+
+    public List<Document> getAllDocuments() {
+        return DocumentRepositoryJDBC.findAll();
+    }
+}package ca.cal.tp2.service.dto;
+
+import java.time.LocalDate;
+
+public class EmpruntDTO {
+    private Long empruntId;
+    private Long emprunteurId;
+    private String status;
+    private LocalDate dateEmprunt;
+
+    public EmpruntDTO(Long empruntId, Long emprunteurId, String status, LocalDate dateEmprunt) {
+        this.empruntId = empruntId;
+        this.emprunteurId = emprunteurId;
+        this.status = status;
+        this.dateEmprunt = dateEmprunt;
+    }
+
+    public Long getEmpruntId() { return empruntId; }
+    public Long getEmprunteurId() { return emprunteurId; }
+    public String getStatus() { return status; }
+    public LocalDate getDateEmprunt() { return dateEmprunt; }
+}
+
+package ca.cal.tp2.service.dto;
+
+public class EmprunteurDTO {
+    private String nom;
+    private String email;
+    private String telephone;
+
+    public EmprunteurDTO(String nom, String email, String telephone) {
+        this.nom = nom;
+        this.email = email;
+        this.telephone = telephone;
+    }
+
+    public String getNom() { return nom; }
+    public String getEmail() { return email; }
+    public String getTelephone() { return telephone; }
+}
+
+package ca.cal.tp2.service.dto;
+
+public class LivreDTO {
+    private Long documentId;
+    private String titre;
+    private int nbExemplaires;
+    private String isbn;
+    private String auteur;
+    private String editeur;
+    private int nbPages;
+
+    public LivreDTO(Long documentId, String titre, int nbExemplaires,
+                    String isbn, String auteur, String editeur, int nbPages) {
+        this.documentId = documentId;
+        this.titre = titre;
+        this.nbExemplaires = nbExemplaires;
+        this.isbn = isbn;
+        this.auteur = auteur;
+        this.editeur = editeur;
+        this.nbPages = nbPages;
+    }
+
+    public Long getDocumentId() { return documentId; }
+    public String getTitre() { return titre; }
+    public int getNbExemplaires() { return nbExemplaires; }
+    public String getIsbn() { return isbn; }
+    public String getAuteur() { return auteur; }
+    public String getEditeur() { return editeur; }
+    public int getNbPages() { return nbPages; }
+}
+package ca.cal.tp2.service;
+
+import ca.cal.tp2.model.Document;
+import ca.cal.tp2.model.Emprunt;
+import ca.cal.tp2.model.EmpruntDetail;
+import ca.cal.tp2.model.Emprunteur;
+import ca.cal.tp2.repository.EmpruntRepositoryJDBC;
+import java.time.LocalDate;
+import java.util.List;
+
+public class EmpruntService {
+    private final EmpruntRepositoryJDBC EmpruntRepositoryJDBC = new EmpruntRepositoryJDBC();
+    private static Long nextEmpruntId = 1L;
+    private static int nextEmpruntDetailId = 1;
+
+    public List<Emprunt> getEmpruntsByMonth(int month, int year) {
+        return EmpruntRepositoryJDBC.findByMonth(month, year);
+    }
+
+    public boolean createEmprunt(Emprunteur emprunteur, Document document) {
+        if (emprunteur.getAmendeBalance() > 0) {
+            return false;
+        }
+
+        if (document.verifieDisponibilite()) {
+            return false;
+        }
+
+        Emprunt emprunt = new Emprunt(nextEmpruntId++, emprunteur);
+        EmpruntDetail empruntDetail = new EmpruntDetail(nextEmpruntDetailId++, document, emprunt);
+
+        emprunt.addEmpruntDetail(empruntDetail);
+
+        document.decrementExemplaires();
+
+        emprunteur.getEmprunts().add(emprunt);
+
+        return EmpruntRepositoryJDBC.save(emprunt);
+    }
+
+    public boolean retournerDocument(Emprunteur emprunteur, Document document) {
+        Emprunt activeEmprunt = null;
+        EmpruntDetail activeEmpruntDetail = null;
+
+        for (Emprunt emprunt : emprunteur.getEmprunts()) {
+            if (emprunt.getStatus().equals("Active")) {
+                for (EmpruntDetail detail : emprunt.getEmpruntDetails()) {
+                    if (detail.getDocument().getDocumentID() == document.getDocumentID()
+                            && detail.getDateRetourActuelle() == null) {
+                        activeEmprunt = emprunt;
+                        activeEmpruntDetail = detail;
+                        break;
+                    }
+                }
+            }
+            if (activeEmprunt != null)
+                break;
+        }
+
+        if (activeEmpruntDetail == null) {
+            return false;
+        }
+
+        activeEmpruntDetail.setDateRetourActuelle(LocalDate.now());
+        activeEmpruntDetail.updateStatus();
+
+        long daysOverdue = activeEmpruntDetail.isEnRetard();
+        if (daysOverdue > 0) {
+            double fineAmount = activeEmpruntDetail.calculAmende();
+            AmendeService amendeService = new AmendeService();
+            amendeService.createAmende(emprunteur, activeEmpruntDetail, fineAmount);
+        }
+
+        document.incrementExemplaires();
+
+        boolean allReturned = true;
+        for (EmpruntDetail detail : activeEmprunt.getEmpruntDetails()) {
+            if (detail.getDateRetourActuelle() == null) {
+                allReturned = false;
+                break;
+            }
+        }
+
+        if (allReturned) {
+            activeEmprunt.setStatus("Completed");
+        }
+
+        return EmpruntRepositoryJDBC.update(activeEmprunt);
+    }
+
+    public List<Emprunt> getEmpruntsForEmprunteur(Emprunteur emprunteur) {
+        return EmpruntRepositoryJDBC.findByEmprunteur(emprunteur);
+    }
+
+    public List<Emprunt> getAllEmprunts() {
+        return EmpruntRepositoryJDBC.findAll();
+    }
+}package ca.cal.tp2.service;
+
+import ca.cal.tp2.model.Emprunteur;
+import ca.cal.tp2.repository.UtilisateurRepositoryJDBC;
+
+public class PreposeService {
+    private final DocumentService documentService;
+    private final AmendeService amendeService;
+    private final UtilisateurRepositoryJDBC UtilisateurRepositoryJDBC;
+
+    public PreposeService() {
+        this.documentService = new DocumentService();
+        this.amendeService = new AmendeService();
+        this.UtilisateurRepositoryJDBC = new UtilisateurRepositoryJDBC();
+    }
+
+    public Emprunteur inscrireNouvelEmprunteur(String nom, String email, String telephone) {
+        Long newUserId = System.currentTimeMillis();
+        Emprunteur emprunteur = new Emprunteur(newUserId, nom, email, telephone);
+        if (UtilisateurRepositoryJDBC.save(emprunteur)) {
+            return emprunteur;
+        }
+        return null;
+    }
+}

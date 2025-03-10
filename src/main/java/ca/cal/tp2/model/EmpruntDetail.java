@@ -1,13 +1,12 @@
 package ca.cal.tp2.model;
 
-import java.util.Calendar;
-import java.util.Date;
-import java.util.concurrent.TimeUnit;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 
 public class EmpruntDetail {
     private int lineItemID;
-    private Date dateRetourPrevue;
-    private Date dateRetourActuelle;
+    private LocalDate dateRetourPrevue;
+    private LocalDate dateRetourActuelle;
     private String status;
     private Document document;
     private Emprunt emprunt;
@@ -18,10 +17,8 @@ public class EmpruntDetail {
         this.emprunt = emprunt;
         this.status = "Borrowed";
 
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(new Date());
-        calendar.add(Calendar.DAY_OF_MONTH, document.getDureeEmprunt());
-        this.dateRetourPrevue = calendar.getTime();
+        // Set the expected return date using LocalDate
+        this.dateRetourPrevue = LocalDate.now().plusDays(document.getDureeEmprunt());
     }
 
     public int getNombreExemplaires() {
@@ -30,17 +27,11 @@ public class EmpruntDetail {
 
     public long isEnRetard() {
         if (dateRetourActuelle != null) {
-            long diff = dateRetourActuelle.getTime() - dateRetourPrevue.getTime();
-            if (diff > 0) {
-                return TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS);
-            }
-            return 0;
+            long diff = ChronoUnit.DAYS.between(dateRetourPrevue, dateRetourActuelle);
+            return diff > 0 ? diff : 0;
         } else {
-            long diff = new Date().getTime() - dateRetourPrevue.getTime();
-            if (diff > 0) {
-                return TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS);
-            }
-            return 0;
+            long diff = ChronoUnit.DAYS.between(dateRetourPrevue, LocalDate.now());
+            return diff > 0 ? diff : 0;
         }
     }
 
@@ -70,19 +61,19 @@ public class EmpruntDetail {
         this.lineItemID = lineItemID;
     }
 
-    public Date getDateRetourPrevue() {
+    public LocalDate getDateRetourPrevue() {
         return dateRetourPrevue;
     }
 
-    public void setDateRetourPrevue(Date dateRetourPrevue) {
+    public void setDateRetourPrevue(LocalDate dateRetourPrevue) {
         this.dateRetourPrevue = dateRetourPrevue;
     }
 
-    public Date getDateRetourActuelle() {
+    public LocalDate getDateRetourActuelle() {
         return dateRetourActuelle;
     }
 
-    public void setDateRetourActuelle(Date dateRetourActuelle) {
+    public void setDateRetourActuelle(LocalDate dateRetourActuelle) {
         this.dateRetourActuelle = dateRetourActuelle;
     }
 
