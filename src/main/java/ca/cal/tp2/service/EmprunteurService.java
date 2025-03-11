@@ -2,7 +2,8 @@ package ca.cal.tp2.service;
 
 import ca.cal.tp2.exception.DatabaseException;
 import ca.cal.tp2.model.*;
-import ca.cal.tp2.repository.InterfaceRepository;
+import ca.cal.tp2.repository.*;
+
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +24,10 @@ public class EmprunteurService {
         this.documentRepository = documentRepository;
         this.empruntDetailsRepository = empruntDetailsRepository;
         this.empruntRepository = empruntRepository;
+    }
+
+    public EmprunteurService(CdRepositoryJDBC cdRepositoryJDBC, DvdRepositoryJDBC dvdRepositoryJDBC, LivreRepositoryJDBC livreRepositoryJDBC) {
+        this.documentRepository = new DocumentRepositoryJDBC(cdRepositoryJDBC, dvdRepositoryJDBC, livreRepositoryJDBC);
     }
 
     public void ajouterEmprunteur(String nom, String email, String numTelephone) {
