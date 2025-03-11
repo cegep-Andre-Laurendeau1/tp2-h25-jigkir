@@ -9,11 +9,11 @@ import java.time.LocalDate;
 
 @Entity
 @NoArgsConstructor
-public class Dvd extends Document{
+public class Dvd extends Document {
     private String directeur;
     private int duree;
     private String genre;
-    private final int dureeEmpruntSem = 1;
+    private final int nbJourEmprunt = 7;
 
     public Dvd(Long id, String titre, LocalDate anneePublication, int nombreExemplaire, String directeur, int duree, String genre) {
         super(id, titre, anneePublication, nombreExemplaire);
@@ -21,6 +21,7 @@ public class Dvd extends Document{
         this.duree = duree;
         this.genre = genre;
     }
+
     public Dvd(String titre, LocalDate anneePublication, int nombreExemplaire, String directeur, int duree, String genre) {
         super(titre, anneePublication, nombreExemplaire);
         this.directeur = directeur;
@@ -28,38 +29,29 @@ public class Dvd extends Document{
         this.genre = genre;
     }
 
-    public String getDirecteur() {
-        return directeur;
-    }
+    public String getDirecteur() { return directeur;     }
 
-    public int getDuree() {
-        return duree;
-    }
+    public int getDuree() { return duree; }
 
-    public String getGenre() {
-        return genre;
-    }
+    public String getGenre() {return genre; }
 
-    public int getDureeEmpruntSem() {
-        return dureeEmpruntSem;
-    }
+    public int getNbJourEmprunt() { return nbJourEmprunt; }
 
     @Override
     public String toString() {
-        return "Dvd{" +
-                "id=" + getId() +
-                ", titre='" + getTitre() + '\'' +
-                ", anneePublication=" + getAnneePublication() +
-                ", nombreExemplaire=" + getNombreExemplaire() +
-                "directeur='" + directeur + '\'' +
-                ", duree=" + duree +
-                ", genre='" + genre + '\'' +
-                ", dureeEmpruntSem=" + dureeEmpruntSem +
-                '}';
+        return "DVD{" +
+                "ID=" + getId() +
+                ", Titre='" + getTitre() + '\'' +
+                ", Année de publication=" + getAnneePublication() +
+                ", Nombre d'exemplaires=" + getNombreExemplaire() +
+                ", Directeur='" + directeur + '\'' +
+                ", Genre='" + genre + '\'' +
+                ", Durée=" + duree + " min" +
+                ", Durée de prêt=" + nbJourEmprunt + " jours" +
+                '}' + "\n";
     }
 
-    @Override
     public DocumentDTO toDTO() {
-        return new DvdDTO( getTitre(), getAnneePublication(),directeur,  duree, genre);
+        return new DvdDTO(getTitre(), getAnneePublication(), directeur, duree, genre);
     }
 }

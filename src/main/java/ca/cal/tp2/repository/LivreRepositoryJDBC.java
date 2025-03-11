@@ -3,7 +3,6 @@ package ca.cal.tp2.repository;
 import ca.cal.tp2.model.Emprunt;
 import ca.cal.tp2.model.Emprunteur;
 import ca.cal.tp2.model.Livre;
-
 import java.sql.PreparedStatement;
 import java.time.LocalDate;
 import java.util.List;
@@ -13,7 +12,7 @@ public class LivreRepositoryJDBC extends RepositoryParent implements InterfaceRe
     @Override
     public void save(Livre livre) {
         String sql = "INSERT INTO livre (id, titre, anneePublication, nombreExemplaire, ISBN, auteur, editeur, nombrePages) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-        try(PreparedStatement ps = conn.prepareStatement(sql)){
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, livre.getId());
             ps.setString(2, livre.getTitre());
             ps.setDate(3, java.sql.Date.valueOf(livre.getAnneePublication()));
@@ -31,10 +30,10 @@ public class LivreRepositoryJDBC extends RepositoryParent implements InterfaceRe
     @Override
     public Livre get(Long id) {
         String sql = "SELECT * FROM livre WHERE id = ?";
-        try(PreparedStatement ps = conn.prepareStatement(sql)){
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, id);
             var result = ps.executeQuery();
-            if(result.next()){
+            if (result.next()) {
                 return new Livre(
                         result.getLong("id"),
                         result.getString("titre"),
@@ -43,8 +42,7 @@ public class LivreRepositoryJDBC extends RepositoryParent implements InterfaceRe
                         result.getString("ISBN"),
                         result.getString("auteur"),
                         result.getString("editeur"),
-                        result.getInt("nombrePages")
-                );
+                        result.getInt("nombrePages"));
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -70,7 +68,7 @@ public class LivreRepositoryJDBC extends RepositoryParent implements InterfaceRe
     @Override
     public void delete(Long id) {
         String sql = "DELETE FROM livre WHERE id = ?";
-        try(PreparedStatement ps = conn.prepareStatement(sql)){
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, id);
             ps.executeUpdate();
         } catch (Exception e) {

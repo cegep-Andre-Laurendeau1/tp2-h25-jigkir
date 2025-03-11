@@ -8,38 +8,37 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.Persistence;
 import jakarta.persistence.TypedQuery;
-
 import java.time.LocalDate;
 import java.util.List;
 
 public class DocumentRepositoryJPA implements InterfaceRepository<Document> {
-    private final EntityManagerFactory entityManagerFactory=
-            Persistence.createEntityManagerFactory("orders.pu");
+    private final EntityManagerFactory entityManagerFactory = Persistence.createEntityManagerFactory("orders.pu");
+
     @Override
     public void save(Document document) throws DatabaseException {
-        try(EntityManager entityManager = entityManagerFactory.createEntityManager()){
+        try (EntityManager entityManager = entityManagerFactory.createEntityManager()) {
             entityManager.getTransaction().begin();
-            try{
+            try {
                 get(document.getId());
                 entityManager.merge(document);
-            }catch(Exception e){
+            } catch (Exception e) {
                 entityManager.persist(document);
             }
 
             entityManager.getTransaction().commit();
-        }
-        catch (DatabaseException e){
+        } catch (DatabaseException e) {
             throw new DatabaseException("Erreur lors de la sauvegarde du document");
         }
     }
 
     @Override
-    public Document get(Long id) throws DatabaseException{
-        try (EntityManager entityManager = entityManagerFactory.createEntityManager()){
+    public Document get(Long id) throws DatabaseException {
+        try (EntityManager entityManager = entityManagerFactory.createEntityManager()) {
             entityManager.getTransaction().begin();
             TypedQuery<Document> query = entityManager.createQuery(
                     "SELECT document FROM Document document " +
-                            "WHERE document.id = :id", Document.class);
+                            "WHERE document.id = :id",
+                    Document.class);
             query.setParameter("id", id);
             query.getSingleResult();
             entityManager.getTransaction().commit();
@@ -64,14 +63,15 @@ public class DocumentRepositoryJPA implements InterfaceRepository<Document> {
         return List.of();
     }
 
-    public List<Document> get(String titreSubString, LocalDate annePublication) throws DatabaseException{
-        try (EntityManager entityManager = entityManagerFactory.createEntityManager()){
+    public List<Document> get(String titreSubString, LocalDate annePublication) throws DatabaseException {
+        try (EntityManager entityManager = entityManagerFactory.createEntityManager()) {
             entityManager.getTransaction().begin();
             TypedQuery<Document> query = entityManager.createQuery(
                     "SELECT document FROM Document document " +
                             "WHERE document.titre LIKE :titreSubString " +
-                            "AND document.anneePublication = :anneePublication ", Document.class);
-            query.setParameter("titreSubString", "%"+titreSubString+"%");
+                            "AND document.anneePublication = :anneePublication ",
+                    Document.class);
+            query.setParameter("titreSubString", "%" + titreSubString + "%");
             query.setParameter("anneePublication", annePublication);
             entityManager.getTransaction().commit();
             return query.getResultList();
@@ -81,13 +81,14 @@ public class DocumentRepositoryJPA implements InterfaceRepository<Document> {
     }
 
     @Override
-    public List<Document> get(String titreSubString) throws DatabaseException{
-        try (EntityManager entityManager = entityManagerFactory.createEntityManager()){
+    public List<Document> get(String titreSubString) throws DatabaseException {
+        try (EntityManager entityManager = entityManagerFactory.createEntityManager()) {
             entityManager.getTransaction().begin();
             TypedQuery<Document> query = entityManager.createQuery(
                     "SELECT document FROM Document document " +
-                            "WHERE document.titre LIKE :titreSubString ", Document.class);
-            query.setParameter("titreSubString", "%"+titreSubString+"%");
+                            "WHERE document.titre LIKE :titreSubString ",
+                    Document.class);
+            query.setParameter("titreSubString", "%" + titreSubString + "%");
             entityManager.getTransaction().commit();
             return query.getResultList();
         } catch (Exception e) {
@@ -96,12 +97,13 @@ public class DocumentRepositoryJPA implements InterfaceRepository<Document> {
     }
 
     @Override
-    public List<Document> get(LocalDate annePublication) throws DatabaseException{
-        try (EntityManager entityManager = entityManagerFactory.createEntityManager()){
+    public List<Document> get(LocalDate annePublication) throws DatabaseException {
+        try (EntityManager entityManager = entityManagerFactory.createEntityManager()) {
             entityManager.getTransaction().begin();
             TypedQuery<Document> query = entityManager.createQuery(
                     "SELECT document FROM Document document " +
-                            "WHERE document.anneePublication = :anneePublication ", Document.class);
+                            "WHERE document.anneePublication = :anneePublication ",
+                    Document.class);
             query.setParameter("anneePublication", annePublication);
             entityManager.getTransaction().commit();
             return query.getResultList();

@@ -4,16 +4,15 @@ import ca.cal.tp2.service.DTO.CdDTO;
 import ca.cal.tp2.service.DTO.DocumentDTO;
 import jakarta.persistence.Entity;
 import lombok.NoArgsConstructor;
-
 import java.time.LocalDate;
 
 @NoArgsConstructor
 @Entity
-public class Cd extends Document{
+public class Cd extends Document {
     private String artiste;
     private int duree;
     private String genre;
-    private final int dureeEmpruntSem = 2;
+    private final int nbJourEmprunt = 14;
 
     public Cd(String titre, LocalDate anneePublication, int nombreExemplaire, String artiste, int duree, String genre) {
         super(titre, anneePublication, nombreExemplaire);
@@ -22,29 +21,21 @@ public class Cd extends Document{
         this.genre = genre;
     }
 
-    public Cd(Long id, String titre, LocalDate anneePublication, int nombreExemplaire, String artiste, int duree, String genre) {
+    public Cd(Long id, String titre, LocalDate anneePublication, int nombreExemplaire, String artiste, int duree,
+            String genre) {
         super(id, titre, anneePublication, nombreExemplaire);
         this.artiste = artiste;
         this.duree = duree;
         this.genre = genre;
     }
 
-    public int getDuree() {
-        return duree;
-    }
+    public int getDuree() { return duree; }
 
+    public String getGenre() { return genre; }
 
-    public String getGenre() {
-        return genre;
-    }
+    public int getNbJourEmprunt() { return nbJourEmprunt; }
 
-    public int getDureeEmpruntSem() {
-        return dureeEmpruntSem;
-    }
-
-    public String getArtiste() {
-        return artiste;
-    }
+    public String getArtiste() { return artiste; }
 
     @Override
     public String toString() {
@@ -53,16 +44,13 @@ public class Cd extends Document{
                 ", titre='" + getTitre() + '\'' +
                 ", anneePublication=" + getAnneePublication() +
                 ", nombreExemplaire=" + getNombreExemplaire() +
-                "artiste='" + artiste + '\'' +
+                ", artiste='" + artiste + '\'' +
                 ", duree=" + duree +
                 ", genre='" + genre + '\'' +
-                ", dureeEmpruntSem=" + dureeEmpruntSem +
-                '}';
+                ", nbJourEmprunt=" + nbJourEmprunt +
+                '}' + "\n";
     }
 
-    @Override
-    public DocumentDTO toDTO() {
-        return new CdDTO(getTitre(), getAnneePublication(),artiste, duree, genre);
-    }
+    public DocumentDTO toDTO() { return new CdDTO(getTitre(), getAnneePublication(), artiste, duree, genre); }
 
 }

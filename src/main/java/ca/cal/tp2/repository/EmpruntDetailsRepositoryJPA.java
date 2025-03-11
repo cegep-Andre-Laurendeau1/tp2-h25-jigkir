@@ -8,21 +8,19 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.Persistence;
 import jakarta.persistence.TypedQuery;
-
 import java.time.LocalDate;
 import java.util.List;
 
 public class EmpruntDetailsRepositoryJPA implements InterfaceRepository<EmpruntDetails> {
-    private final EntityManagerFactory entityManagerFactory=
-            Persistence.createEntityManagerFactory("orders.pu");
+    private final EntityManagerFactory entityManagerFactory = Persistence.createEntityManagerFactory("orders.pu");
+
     @Override
     public void save(EmpruntDetails empruntDetails) {
-        try(EntityManager entityManager = entityManagerFactory.createEntityManager()){
+        try (EntityManager entityManager = entityManagerFactory.createEntityManager()) {
             entityManager.getTransaction().begin();
-            if(get(empruntDetails.getId()) != null){
+            if (get(empruntDetails.getId()) != null) {
                 entityManager.merge(empruntDetails);
-            }
-            else {
+            } else {
                 entityManager.persist(empruntDetails);
             }
 
@@ -32,11 +30,12 @@ public class EmpruntDetailsRepositoryJPA implements InterfaceRepository<EmpruntD
 
     @Override
     public EmpruntDetails get(Long id) throws DatabaseException {
-        try (EntityManager entityManager = entityManagerFactory.createEntityManager()){
+        try (EntityManager entityManager = entityManagerFactory.createEntityManager()) {
             entityManager.getTransaction().begin();
             TypedQuery<EmpruntDetails> query = entityManager.createQuery(
                     "SELECT empruntDetails FROM EmpruntDetails empruntDetails " +
-                            "WHERE empruntDetails.id = :id", EmpruntDetails.class);
+                            "WHERE empruntDetails.id = :id",
+                    EmpruntDetails.class);
             query.setParameter("id", id);
             query.getSingleResult();
             entityManager.getTransaction().commit();
@@ -47,11 +46,12 @@ public class EmpruntDetailsRepositoryJPA implements InterfaceRepository<EmpruntD
     }
 
     public List<EmpruntDetails> get(Emprunt emprunt) throws DatabaseException {
-        try (EntityManager entityManager = entityManagerFactory.createEntityManager()){
+        try (EntityManager entityManager = entityManagerFactory.createEntityManager()) {
             entityManager.getTransaction().begin();
             TypedQuery<EmpruntDetails> query = entityManager.createQuery(
                     "SELECT empruntDetails FROM EmpruntDetails empruntDetails " +
-                            "WHERE empruntDetails.emprunt = :emprunt", EmpruntDetails.class);
+                            "WHERE empruntDetails.emprunt = :emprunt",
+                    EmpruntDetails.class);
             query.setParameter("emprunt", emprunt);
             query.getResultList();
             entityManager.getTransaction().commit();

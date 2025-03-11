@@ -7,38 +7,37 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.Persistence;
 import jakarta.persistence.TypedQuery;
-
 import java.time.LocalDate;
 import java.util.List;
 
 public class EmprunteurRepositoryJPA implements InterfaceRepository<Emprunteur> {
-    private final EntityManagerFactory entityManagerFactory=
-            Persistence.createEntityManagerFactory("orders.pu");
+    private final EntityManagerFactory entityManagerFactory = Persistence.createEntityManagerFactory("orders.pu");
+
     @Override
     public void save(Emprunteur emprunteur) throws DatabaseException {
-        try(EntityManager entityManager = entityManagerFactory.createEntityManager()){
+        try (EntityManager entityManager = entityManagerFactory.createEntityManager()) {
             entityManager.getTransaction().begin();
             entityManager.persist(emprunteur);
             entityManager.getTransaction().commit();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new DatabaseException("Erreur lors de la sauvegarde de l'emprunteur");
         }
     }
 
     @Override
-    public Emprunteur get(Long id) throws DatabaseException{
-        try (EntityManager entityManager = entityManagerFactory.createEntityManager()){
+    public Emprunteur get(Long id) throws DatabaseException {
+        try (EntityManager entityManager = entityManagerFactory.createEntityManager()) {
             entityManager.getTransaction().begin();
             TypedQuery<Emprunteur> query = entityManager.createQuery(
                     "SELECT emprunteur FROM Emprunteur emprunteur " +
-                            "WHERE emprunteur.id = :id", Emprunteur.class);
+                            "WHERE emprunteur.id = :id",
+                    Emprunteur.class);
             query.setParameter("id", id);
             query.getSingleResult();
             entityManager.getTransaction().commit();
             return query.getSingleResult();
         } catch (Exception e) {
-            throw new DatabaseException("Erreur lors de la récupération de l'emprunteur");
+            throw new DatabaseException("Erreur lors de la récupération de l'emprunteur" + "\n");
         }
     }
 

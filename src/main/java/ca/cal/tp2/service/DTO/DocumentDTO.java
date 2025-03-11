@@ -2,7 +2,6 @@ package ca.cal.tp2.service.DTO;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-
 import java.time.LocalDate;
 
 @Getter
@@ -16,6 +15,6 @@ public class DocumentDTO {
         return "DocumentDTO{" +
                 ", titre='" + titre + '\'' +
                 ", anneePublication=" + anneePublication +
-                '}';
+                '}' + "\n";
     }
 }

@@ -3,7 +3,6 @@ package ca.cal.tp2.repository;
 import ca.cal.tp2.model.Dvd;
 import ca.cal.tp2.model.Emprunt;
 import ca.cal.tp2.model.Emprunteur;
-
 import java.sql.PreparedStatement;
 import java.time.LocalDate;
 import java.util.List;
@@ -13,7 +12,7 @@ public class DvdRepositoryJDBC extends RepositoryParent implements InterfaceRepo
     @Override
     public void save(Dvd dvd) {
         String sql = "INSERT INTO dvd (id, titre, anneePublication, nombreExemplaire, directeur, duree, genre) VALUES (?, ?, ?, ?, ?, ?, ?)";
-        try(PreparedStatement ps = conn.prepareStatement(sql)){
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, dvd.getId());
             ps.setString(2, dvd.getTitre());
             ps.setDate(3, java.sql.Date.valueOf(dvd.getAnneePublication()));
@@ -30,10 +29,10 @@ public class DvdRepositoryJDBC extends RepositoryParent implements InterfaceRepo
     @Override
     public Dvd get(Long id) {
         String sql = "SELECT * FROM dvd WHERE id = ?";
-        try(PreparedStatement ps = conn.prepareStatement(sql)){
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, id);
             var result = ps.executeQuery();
-            if(result.next()){
+            if (result.next()) {
                 return new Dvd(
                         result.getLong("id"),
                         result.getString("titre"),
@@ -41,8 +40,7 @@ public class DvdRepositoryJDBC extends RepositoryParent implements InterfaceRepo
                         result.getInt("nombreExemplaire"),
                         result.getString("directeur"),
                         result.getInt("duree"),
-                        result.getString("genre")
-                );
+                        result.getString("genre"));
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -68,7 +66,7 @@ public class DvdRepositoryJDBC extends RepositoryParent implements InterfaceRepo
     @Override
     public void delete(Long id) {
         String sql = "DELETE FROM dvd WHERE id = ?";
-        try(PreparedStatement ps = conn.prepareStatement(sql)){
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, id);
             ps.executeUpdate();
         } catch (Exception e) {

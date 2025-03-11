@@ -6,7 +6,7 @@ public class CdDTO extends DocumentDTO {
     private String artiste;
     private int duree;
     private String genre;
-    private final int dureeEmpruntSem = 2;
+    private final int nbJourEmprunt = 14;
 
     public CdDTO (String titre, LocalDate anneePublication,  String artiste, int duree, String genre) {
         super(titre, anneePublication);
@@ -18,12 +18,12 @@ public class CdDTO extends DocumentDTO {
     @Override
     public String toString() {
         return "CdDTO{" +
-                ", titre='" + getTitre() + '\'' +
-                ", anneePublication=" + getAnneePublication() +
-                "artiste='" + artiste + '\'' +
+                "titre='" + getTitre() + '\'' +
+                ", anneePublication=" + getAnneePublication() +  // <-- FIXED
+                ", artiste='" + artiste + '\'' +
                 ", duree=" + duree +
                 ", genre='" + genre + '\'' +
-                ", dureeEmpruntSem=" + dureeEmpruntSem +
-                '}';
+                ", nbJourEmprunt=" + nbJourEmprunt +
+                '}' + "\n";
     }
 }

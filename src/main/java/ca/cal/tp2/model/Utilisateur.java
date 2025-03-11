@@ -17,7 +17,8 @@ public abstract class Utilisateur {
     private String nom;
     private String email;
     private String numTelephone;
-    public Utilisateur(String nom, String email, String numTelephone){
+
+    public Utilisateur(String nom, String email, String numTelephone) {
         this.nom = nom;
         this.email = email;
         this.numTelephone = numTelephone;

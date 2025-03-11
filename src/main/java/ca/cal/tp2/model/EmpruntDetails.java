@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 
 @Entity
-@AllArgsConstructor
 @NoArgsConstructor
 @Getter
 public class EmpruntDetails {
@@ -26,40 +25,37 @@ public class EmpruntDetails {
     @ManyToOne
     private Document document;
 
-    public EmpruntDetails(LocalDate dateRetourPrevue, LocalDate dateRetourActuelle, String status) {
+    public EmpruntDetails(LocalDate dateRetourPrevue, LocalDate dateRetourActuelle, String status, Emprunt emprunt, Document document) {
         this.dateRetourPrevue = dateRetourPrevue;
-        this.dateRetourActuelle = dateRetourActuelle;
-        this.status = status;
-    }
-    public EmpruntDetails(LocalDate dateRetourPrevue, String status, Emprunt emprunt, Document document) {
-        this.dateRetourPrevue = dateRetourPrevue;
-        this.status = status;
+        this.dateRetourActuelle = (dateRetourActuelle != null) ? dateRetourActuelle : dateRetourPrevue;
+        this.status = mapStatus(status);
         this.emprunt = emprunt;
         this.document = document;
     }
 
-    public Long getId() {
-        return id;
+    public EmpruntDetails(LocalDate dateRetourPrevue, String status, Emprunt emprunt, Document document) {
+        this(dateRetourPrevue, dateRetourPrevue, status, emprunt, document);
     }
 
-    public LocalDate getDateRetourPrevue() {
-        return dateRetourPrevue;
-    }
-
-    public LocalDate getDateRetourActuelle() {
-        return dateRetourActuelle;
-    }
-
-    public String getStatus() {
+    private String mapStatus(String status) {
+        if (status == null || status.equalsIgnoreCase("nouveau")) {
+            return "readyToBeBorrowed";
+        } else if (status.equalsIgnoreCase("not free")) {
+            return "beingBorrowed";
+        } else if (status.equalsIgnoreCase("Non existent")) {
+            return "Pas d'exemplaire disponible";
+        }
         return status;
     }
+
+    @Override
     public String toString() {
         return "EmpruntDetails{" +
                 "id=" + id +
                 ", dateRetourPrevue=" + dateRetourPrevue +
                 ", dateRetourActuelle=" + dateRetourActuelle +
                 ", status='" + status + '\'' +
-                '}';
+                '}'+ "\n";
     }
 
     public EmpruntDetailDTO toDTO() {

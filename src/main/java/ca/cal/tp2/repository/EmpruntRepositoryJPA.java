@@ -9,42 +9,43 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.Persistence;
 import jakarta.persistence.TypedQuery;
-
 import java.time.LocalDate;
 import java.util.List;
 
 public class EmpruntRepositoryJPA implements InterfaceRepository<Emprunt> {
-    private final EntityManagerFactory entityManagerFactory=
-            Persistence.createEntityManagerFactory("orders.pu");
+    private final EntityManagerFactory entityManagerFactory = Persistence.createEntityManagerFactory("orders.pu");
+
     @Override
     public void save(Emprunt emprunt) throws DatabaseException {
-        try(EntityManager entityManager = entityManagerFactory.createEntityManager()){
+        try (EntityManager entityManager = entityManagerFactory.createEntityManager()) {
             entityManager.getTransaction().begin();
-            Emprunt empruntSansDetails = new Emprunt(emprunt.getDateEmprunt(), emprunt.getStatus(), emprunt.getEmprunteur());
+            Emprunt empruntSansDetails = new Emprunt(emprunt.getDateEmprunt(), emprunt.getStatus(),
+                    emprunt.getEmprunteur());
             entityManager.persist(empruntSansDetails);
 
             for (int i = 0; i < emprunt.getEmpruntDetails().toArray().length; i++) {
                 EmpruntDetails empruntDetailsCourant = emprunt.getEmpruntDetails().get(i);
                 Document documentCourant = empruntDetailsCourant.getDocument();
-                documentCourant.setNombreExemplaire(documentCourant.getNombreExemplaire()-1);
+                documentCourant.setNombreExemplaire(documentCourant.getNombreExemplaire() - 1);
 
-                entityManager.persist(new EmpruntDetails(empruntDetailsCourant.getDateRetourPrevue(), empruntDetailsCourant.getStatus(), empruntSansDetails,empruntDetailsCourant.getDocument()));
+                entityManager.persist(new EmpruntDetails(empruntDetailsCourant.getDateRetourPrevue(),
+                        empruntDetailsCourant.getStatus(), empruntSansDetails, empruntDetailsCourant.getDocument()));
                 entityManager.merge(documentCourant);
             }
             entityManager.getTransaction().commit();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new DatabaseException("Erreur lors de la sauvegarde de l'emprunt");
         }
     }
 
     @Override
-    public Emprunt get(Long id) throws DatabaseException{
-        try (EntityManager entityManager = entityManagerFactory.createEntityManager()){
+    public Emprunt get(Long id) throws DatabaseException {
+        try (EntityManager entityManager = entityManagerFactory.createEntityManager()) {
             entityManager.getTransaction().begin();
             TypedQuery<Emprunt> query = entityManager.createQuery(
                     "SELECT emprunt FROM Emprunt emprunt " +
-                            "WHERE emprunt.id = :id", Emprunt.class);
+                            "WHERE emprunt.id = :id",
+                    Emprunt.class);
             query.setParameter("id", id);
             query.getSingleResult();
             entityManager.getTransaction().commit();
@@ -55,11 +56,12 @@ public class EmpruntRepositoryJPA implements InterfaceRepository<Emprunt> {
     }
 
     public List<Emprunt> get(Emprunteur emprunteur) throws DatabaseException {
-        try (EntityManager entityManager = entityManagerFactory.createEntityManager()){
+        try (EntityManager entityManager = entityManagerFactory.createEntityManager()) {
             entityManager.getTransaction().begin();
             TypedQuery<Emprunt> query = entityManager.createQuery(
                     "SELECT emprunt FROM Emprunt emprunt " +
-                            "WHERE emprunt.emprunteur.id = :idEmprunteur", Emprunt.class);
+                            "WHERE emprunt.emprunteur.id = :idEmprunteur",
+                    Emprunt.class);
             query.setParameter("idEmprunteur", emprunteur.getId());
             query.getResultList();
             entityManager.getTransaction().commit();
