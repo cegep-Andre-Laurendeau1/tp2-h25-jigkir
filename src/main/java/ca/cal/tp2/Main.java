@@ -2,7 +2,6 @@ package ca.cal.tp2;
 
 import ca.cal.tp2.repository.*;
 import ca.cal.tp2.service.EmprunteurService;
-import ca.cal.tp2.utils.TcpServer;
 
 import java.time.LocalDate;
 import java.sql.SQLException;
