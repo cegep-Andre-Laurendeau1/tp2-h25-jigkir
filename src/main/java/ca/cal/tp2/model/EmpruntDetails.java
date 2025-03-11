@@ -2,7 +2,6 @@ package ca.cal.tp2.model;
 
 import ca.cal.tp2.service.DTO.EmpruntDetailDTO;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -15,6 +14,7 @@ public class EmpruntDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    private LocalDate dateEmpruntActuelle;
     private LocalDate dateRetourPrevue;
     private LocalDate dateRetourActuelle;
     private String status;
@@ -25,16 +25,21 @@ public class EmpruntDetails {
     @ManyToOne
     private Document document;
 
-    public EmpruntDetails(LocalDate dateRetourPrevue, LocalDate dateRetourActuelle, String status, Emprunt emprunt, Document document) {
+    public EmpruntDetails(LocalDate dateEmpruntActuelle, String status, Emprunt emprunt, Document document) {
+        this.dateEmpruntActuelle = dateEmpruntActuelle;
         this.dateRetourPrevue = dateRetourPrevue;
-        this.dateRetourActuelle = (dateRetourActuelle != null) ? dateRetourActuelle : dateRetourPrevue;
+        this.dateRetourPrevue = dateEmpruntActuelle.plusDays(emprunt.getNbJourEmprunt());
+        this.dateRetourActuelle = (dateRetourActuelle != null) ? dateRetourActuelle : this.dateRetourPrevue;
         this.status = mapStatus(status);
         this.emprunt = emprunt;
         this.document = document;
     }
 
-    public EmpruntDetails(LocalDate dateRetourPrevue, String status, Emprunt emprunt, Document document) {
-        this(dateRetourPrevue, dateRetourPrevue, status, emprunt, document);
+    public EmpruntDetails(LocalDate dateEmpruntActuelle, LocalDate dateRetourPrevue, String status, Emprunt emprunt, Document document) {
+        this(dateEmpruntActuelle,
+                status,
+                emprunt,
+                document);
     }
 
     private String mapStatus(String status) {

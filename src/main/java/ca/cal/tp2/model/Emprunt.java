@@ -25,6 +25,7 @@ public class Emprunt {
 
     @OneToMany(mappedBy = "emprunt", cascade = CascadeType.ALL)
     private List<EmpruntDetails> empruntDetails;
+    private long nbJourEmprunt;
 
     public Emprunt(LocalDate dateEmprunt, String status, List<EmpruntDetails> empruntDetails, Emprunteur emprunteur) {
         this.dateEmprunt = dateEmprunt;
@@ -50,5 +51,9 @@ public class Emprunt {
 
     public EmpruntDTO toDTO() {
         return new EmpruntDTO(this.dateEmprunt, this.status, this.emprunteur);
+    }
+
+    public long getNbJourEmprunt() {
+        return nbJourEmprunt;
     }
 }
