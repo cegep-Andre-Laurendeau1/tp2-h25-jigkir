@@ -19,7 +19,7 @@ public class CdDTO extends DocumentDTO {
     public String toString() {
         return "CdDTO{" +
                 "titre='" + getTitre() + '\'' +
-                ", anneePublication=" + getAnneePublication() +  // <-- FIXED
+                ", anneePublication=" + getAnneePublication() +
                 ", artiste='" + artiste + '\'' +
                 ", duree=" + duree +
                 ", genre='" + genre + '\'' +

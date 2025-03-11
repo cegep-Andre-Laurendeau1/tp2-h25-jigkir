@@ -11,7 +11,7 @@ public class LivreDTO extends DocumentDTO {
     private final int nbJourEmprunt = 21;
 
     public LivreDTO(String titre, LocalDate anneePublication, String ISBN, String auteur, String editeur,
-            int nombrePages) {
+                    int nombrePages) {
         super(titre, anneePublication);
         this.ISBN = ISBN;
         this.auteur = auteur;

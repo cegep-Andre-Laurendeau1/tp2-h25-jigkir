@@ -76,17 +76,14 @@ public class Main {
         list.add(1L);
         list.add(2L);
         emprunteurServiceJPA.emprunterDocument(list, 1L);
-        System.out.println("\n");
 
         list.add(3L);
         emprunteurServiceJPA.emprunterDocument(list, 1L);
-        System.out.println("\n");
         try {
             emprunteurServiceJPA.emprunterDocument(list, 1L);
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
-        System.out.println("\n");
 
         System.out.println("################################");
         System.out.println("#Section getDocumentsEmprunteur#");
@@ -94,17 +91,13 @@ public class Main {
         emprunteurServiceJPA.getDocumentsEmprunteur(1L);
         emprunteurServiceJPA.getDocumentsEmprunteur(400000L);
 
-        System.out.println("\n");
 
         System.out.println("########################");
         System.out.println("#Section getDocumentFin#");
         System.out.println("########################");
         System.out.println(emprunteurServiceJPA.getDocument(1L));
-        System.out.println("\n");
         System.out.println(emprunteurServiceJPA.getDocument(2L));
-        System.out.println("\n");
         System.out.println(emprunteurServiceJPA.getDocument(3L));
-        System.out.println("\n");
 
         Thread.currentThread().join();
     }
