@@ -7,7 +7,7 @@ import java.sql.PreparedStatement;
 import java.time.LocalDate;
 import java.util.List;
 
-public class LivreRepositoryJDBC extends RepositoryParent implements InterfaceRepository<Livre> {
+public class LivreRepositoryJDBC extends ParentRepository implements InterfaceRepository<Livre> {
 
     @Override
     public void save(Livre livre) {

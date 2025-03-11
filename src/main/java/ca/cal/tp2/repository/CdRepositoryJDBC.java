@@ -8,7 +8,7 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
 
-public class CdRepositoryJDBC extends RepositoryParent implements InterfaceRepository<Cd> {
+public class CdRepositoryJDBC extends ParentRepository implements InterfaceRepository<Cd> {
 
     @Override
     public void save(Cd cd) {

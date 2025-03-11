@@ -7,7 +7,7 @@ import java.sql.PreparedStatement;
 import java.time.LocalDate;
 import java.util.List;
 
-public class DvdRepositoryJDBC extends RepositoryParent implements InterfaceRepository<Dvd> {
+public class DvdRepositoryJDBC extends ParentRepository implements InterfaceRepository<Dvd> {
 
     @Override
     public void save(Dvd dvd) {
